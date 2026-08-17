@@ -1,0 +1,18 @@
+# Dependencies
+**/node_modules/
+
+# Local environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Expo and build output
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+frontend/expo-env.d.ts
+
+# Local tooling and operating-system files
+*.tsbuildinfo
+.DS_Store
+
