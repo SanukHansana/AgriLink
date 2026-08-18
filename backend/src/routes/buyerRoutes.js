@@ -17,6 +17,10 @@ import {
   getBuyerOrder,
   getBuyerOrders,
 } from '../controllers/buyer/orderController.js';
+import {
+  getMarketplaceProduct,
+  searchMarketplaceProducts,
+} from '../controllers/buyer/marketplaceController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { requireRole } from '../middleware/roleMiddleware.js';
 
@@ -34,6 +38,9 @@ router
 router.post('/bids', createBid);
 router.get('/bids', getBuyerBids);
 router.get('/bids/:bidId', getBuyerBid);
+
+router.get('/marketplace/products', searchMarketplaceProducts);
+router.get('/marketplace/products/:productId', getMarketplaceProduct);
 
 router.post('/orders/fixed-price', createFixedPriceOrder);
 router.post('/orders/advance', createAdvanceOrder);
