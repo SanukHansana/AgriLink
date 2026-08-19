@@ -64,6 +64,9 @@ export default function BuyerTabsLayout() {
           tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="profile" />,
         }}
       />
+      <Tabs.Screen name="bid" options={{ href: null }} />
+      <Tabs.Screen name="bids" options={{ href: null }} />
+      <Tabs.Screen name="checkout" options={{ href: null }} />
     </Tabs>
   );
 }

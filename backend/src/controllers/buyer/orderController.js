@@ -1,5 +1,5 @@
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
-import { PRODUCT_UNITS } from '../../models/Bid.js';
+import Product from '../../models/Product.js';
 import {
   isPositiveNumber,
   isValidMongoId,
@@ -21,9 +21,7 @@ function createBuyerOrder(orderType) {
     try {
       const {
         productId,
-        sellerId,
         quantity,
-        unit,
         pricePerUnit,
         deliveryAddress,
         requestedDeliveryDate,
@@ -34,20 +32,8 @@ function createBuyerOrder(orderType) {
         return response.status(400).json({ message: 'Enter a valid product ID' });
       }
 
-      if (!isValidMongoId(sellerId)) {
-        return response.status(400).json({ message: 'Enter a valid seller ID' });
-      }
-
       if (!isPositiveNumber(quantity)) {
         return response.status(400).json({ message: 'Quantity must be a positive number' });
-      }
-
-      if (!isPositiveNumber(pricePerUnit)) {
-        return response.status(400).json({ message: 'Price per unit must be a positive number' });
-      }
-
-      if (!PRODUCT_UNITS.includes(unit)) {
-        return response.status(400).json({ message: 'Unit must be kg, piece or box' });
       }
 
       if (!validateDeliveryAddress(deliveryAddress)) {
@@ -67,14 +53,39 @@ function createBuyerOrder(orderType) {
         });
       }
 
+      const product = await Product.findOne({ _id: productId, status: 'active' });
+
+      if (!product) {
+        return response.status(404).json({ message: 'Product not found or no longer available' });
+      }
+
+      if (orderType === 'fixedPrice' && product.pricingMode === 'bidding') {
+        return response.status(400).json({
+          message: 'Fixed-price ordering is not available for this product',
+        });
+      }
+
+      if (orderType === 'advance' && product.listingType !== 'future') {
+        return response.status(400).json({
+          message: 'Advance orders can only be created for future harvests',
+        });
+      }
+
+      const effectivePrice = product.fixedPrice ?? pricePerUnit;
+      if (!isPositiveNumber(effectivePrice)) {
+        return response.status(400).json({
+          message: 'A positive price is required for this order',
+        });
+      }
+
       const order = await Order.create({
         buyer: request.user._id,
-        seller: sellerId,
+        seller: product.farmer,
         product: productId,
         orderType,
         quantity,
-        unit,
-        pricePerUnit,
+        unit: product.unit,
+        pricePerUnit: effectivePrice,
         deliveryAddress,
         requestedDeliveryDate: deliveryDate,
         notes,
@@ -109,7 +120,10 @@ export async function getBuyerOrders(request, response, next) {
       filter.status = status;
     }
 
-    const orders = await Order.find(filter).sort({ createdAt: -1 });
+    const orders = await Order.find(filter)
+      .populate('product', 'name images unit farmLocation')
+      .populate('seller', 'name')
+      .sort({ createdAt: -1 });
 
     return response.status(200).json({
       count: orders.length,
@@ -131,7 +145,9 @@ export async function getBuyerOrder(request, response, next) {
     const order = await Order.findOne({
       _id: orderId,
       buyer: request.user._id,
-    });
+    })
+      .populate('product', 'name images unit farmLocation')
+      .populate('seller', 'name');
 
     if (!order) {
       return response.status(404).json({ message: 'Order not found' });

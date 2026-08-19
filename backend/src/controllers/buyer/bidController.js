@@ -1,9 +1,10 @@
-import Bid, { BID_STATUSES, PRODUCT_UNITS } from '../../models/Bid.js';
+import Bid, { BID_STATUSES } from '../../models/Bid.js';
+import Product from '../../models/Product.js';
 import { isPositiveNumber, isValidMongoId } from '../../utils/validation.js';
 
 export async function createBid(request, response, next) {
   try {
-    const { productId, bidAmount, quantity, unit } = request.body;
+    const { productId, bidAmount, quantity } = request.body;
 
     if (!isValidMongoId(productId)) {
       return response.status(400).json({ message: 'Enter a valid product ID' });
@@ -17,8 +18,14 @@ export async function createBid(request, response, next) {
       return response.status(400).json({ message: 'Quantity must be a positive number' });
     }
 
-    if (!PRODUCT_UNITS.includes(unit)) {
-      return response.status(400).json({ message: 'Unit must be kg, piece or box' });
+    const product = await Product.findOne({ _id: productId, status: 'active' });
+
+    if (!product) {
+      return response.status(404).json({ message: 'Product not found or no longer available' });
+    }
+
+    if (product.pricingMode === 'fixedPrice') {
+      return response.status(400).json({ message: 'Bidding is not available for this product' });
     }
 
     const bid = await Bid.create({
@@ -26,7 +33,7 @@ export async function createBid(request, response, next) {
       product: productId,
       bidAmount,
       quantity,
-      unit,
+      unit: product.unit,
     });
 
     return response.status(201).json({
@@ -51,7 +58,9 @@ export async function getBuyerBids(request, response, next) {
       filter.status = status;
     }
 
-    const bids = await Bid.find(filter).sort({ createdAt: -1 });
+    const bids = await Bid.find(filter)
+      .populate('product', 'name images unit farmLocation minimumBidPrice biddingClosesAt status')
+      .sort({ createdAt: -1 });
 
     return response.status(200).json({
       count: bids.length,
@@ -73,7 +82,7 @@ export async function getBuyerBid(request, response, next) {
     const bid = await Bid.findOne({
       _id: bidId,
       buyer: request.user._id,
-    });
+    }).populate('product', 'name images unit farmLocation minimumBidPrice biddingClosesAt status');
 
     if (!bid) {
       return response.status(404).json({ message: 'Bid not found' });
