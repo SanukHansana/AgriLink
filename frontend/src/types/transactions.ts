@@ -35,19 +35,42 @@ export type DeliveryAddressInput = {
   postalCode?: string;
 };
 
+export type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'preparing'
+  | 'dispatched'
+  | 'inTransit'
+  | 'delivered'
+  | 'cancelled';
+
+export type OrderProductSummary = {
+  _id: string;
+  name: string;
+  images: string[];
+  unit: ProductUnit;
+  farmLocation?: {
+    addressLine?: string;
+    city?: string;
+    district: string;
+  };
+};
+
 export type BuyerOrder = {
   _id: string;
   orderCode: string;
   buyer: string;
   seller: string | { _id: string; name: string };
-  product: string | { _id: string; name: string; images: string[]; unit: ProductUnit };
+  product: string | OrderProductSummary;
   orderType: 'fixedPrice' | 'advance';
   quantity: number;
   unit: ProductUnit;
   pricePerUnit: number;
   totalAmount: number;
   deliveryAddress: DeliveryAddressInput;
-  status: 'pending' | 'confirmed' | 'preparing' | 'dispatched' | 'inTransit' | 'delivered' | 'cancelled';
+  requestedDeliveryDate?: string;
+  notes?: string;
+  status: OrderStatus;
   createdAt: string;
   updatedAt: string;
 };

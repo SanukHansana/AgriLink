@@ -18,20 +18,26 @@ import { ProductImage } from '@/components/buyer/product-image';
 import { BrandColors } from '@/constants/theme';
 import { useMarketplaceProduct } from '@/hooks/use-marketplace-product';
 import { getApiErrorMessage } from '@/services/api';
-import { createFixedPriceOrder } from '@/services/order-service';
+import { createAdvanceOrder, createFixedPriceOrder } from '@/services/order-service';
 import type { BuyerOrder } from '@/types/transactions';
 import { formatLkr, getSellerName } from '@/utils/formatters';
 
 export default function BuyerCheckoutScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ productId: string; quantity?: string }>();
+  const params = useLocalSearchParams<{
+    productId: string;
+    quantity?: string;
+    orderType?: 'fixedPrice' | 'advance';
+  }>();
   const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId;
   const requestedQuantity = Number(Array.isArray(params.quantity) ? params.quantity[0] : params.quantity);
+  const requestedOrderType = Array.isArray(params.orderType) ? params.orderType[0] : params.orderType;
   const { error: productError, isLoading, product, refresh } = useMarketplaceProduct(productId);
   const [addressLine, setAddressLine] = useState('');
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
   const [postalCode, setPostalCode] = useState('');
+  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<BuyerOrder | null>(null);
@@ -53,7 +59,8 @@ export default function BuyerCheckoutScreen() {
           </View>
           <Text style={styles.successTitle}>Order placed!</Text>
           <Text style={styles.successMessage}>
-            Your fixed-price order was saved and is ready for the farmer to review.
+            Your {createdOrder.orderType === 'advance' ? 'advance' : 'fixed-price'} order was saved
+            and is ready for the farmer to review.
           </Text>
           <View style={styles.successCard}>
             <View style={styles.summaryRow}>
@@ -86,6 +93,7 @@ export default function BuyerCheckoutScreen() {
       : product.minimumOrderQuantity;
   const price = product.fixedPrice ?? 0;
   const subtotal = price * quantity;
+  const isAdvanceOrder = product.listingType === 'future' || requestedOrderType === 'advance';
 
   const placeOrder = async () => {
     setSubmitError(null);
@@ -95,9 +103,18 @@ export default function BuyerCheckoutScreen() {
       return;
     }
 
+    if (
+      isAdvanceOrder &&
+      (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDeliveryDate) ||
+        Number.isNaN(new Date(requestedDeliveryDate).getTime()))
+    ) {
+      setSubmitError('Enter the requested delivery date as YYYY-MM-DD.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const result = await createFixedPriceOrder({
+      const orderInput = {
         productId,
         quantity,
         deliveryAddress: {
@@ -106,7 +123,13 @@ export default function BuyerCheckoutScreen() {
           district: district.trim(),
           postalCode: postalCode.trim() || undefined,
         },
-      });
+      };
+      const result = isAdvanceOrder
+        ? await createAdvanceOrder({
+            ...orderInput,
+            requestedDeliveryDate,
+          })
+        : await createFixedPriceOrder(orderInput);
       setCreatedOrder(result.order);
     } catch (requestError) {
       setSubmitError(getApiErrorMessage(requestError));
@@ -125,9 +148,29 @@ export default function BuyerCheckoutScreen() {
             <Pressable accessibilityRole="button" onPress={() => router.back()}>
               <Text style={styles.backIcon}>‹</Text>
             </Pressable>
-            <Text style={styles.topBarTitle}>Checkout</Text>
+            <Text style={styles.topBarTitle}>{isAdvanceOrder ? 'Advance Order' : 'Checkout'}</Text>
             <View style={styles.topBarSpacer} />
           </View>
+
+          {isAdvanceOrder ? (
+            <>
+              <Text style={styles.sectionLabel}>REQUESTED DELIVERY DATE</Text>
+              <View style={styles.formCard}>
+                <FormField
+                  autoCapitalize="none"
+                  label="Delivery date"
+                  onChangeText={setRequestedDeliveryDate}
+                  placeholder="YYYY-MM-DD"
+                  value={requestedDeliveryDate}
+                />
+                {product.harvestDate ? (
+                  <Text style={styles.harvestHint}>
+                    Expected harvest: {new Date(product.harvestDate).toLocaleDateString('en-LK')}
+                  </Text>
+                ) : null}
+              </View>
+            </>
+          ) : null}
 
           <Text style={styles.sectionLabel}>ORDER ITEM</Text>
           <View style={styles.productCard}>
@@ -205,7 +248,7 @@ export default function BuyerCheckoutScreen() {
 
           {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
           <PrimaryButton
-            label="Confirm & Place Order"
+            label={isAdvanceOrder ? 'Confirm Advance Order' : 'Confirm & Place Order'}
             loading={isSubmitting}
             onPress={placeOrder}
           />
@@ -311,6 +354,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     padding: 13,
+  },
+  harvestHint: {
+    color: '#858885',
+    fontSize: 11,
   },
   paymentMark: {
     backgroundColor: BrandColors.primary,
