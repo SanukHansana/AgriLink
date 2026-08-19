@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
 import { ProductImage } from '@/components/buyer/product-image';
 import { BrandColors } from '@/constants/theme';
-import { getApiErrorMessage } from '@/services/api';
-import { getMarketplaceProduct } from '@/services/marketplace-service';
-import type { MarketplaceProduct } from '@/types/marketplace';
+import { useMarketplaceProduct } from '@/hooks/use-marketplace-product';
 import {
   formatLkr,
   formatProductUnit,
@@ -20,37 +18,8 @@ export default function BuyerProductDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ productId: string }>();
   const productId = Array.isArray(params.productId) ? params.productId[0] : params.productId;
-  const [product, setProduct] = useState<MarketplaceProduct | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    let isActive = true;
-
-    const loadProduct = async () => {
-      try {
-        const result = await getMarketplaceProduct(productId);
-        if (isActive) {
-          setProduct(result);
-          setError(null);
-        }
-      } catch (requestError) {
-        if (isActive) {
-          setError(getApiErrorMessage(requestError));
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadProduct();
-    return () => {
-      isActive = false;
-    };
-  }, [productId, refreshKey]);
+  const { error, isLoading, product, refresh } = useMarketplaceProduct(productId);
+  const [quantity, setQuantity] = useState(0);
 
   if (isLoading || error || !product) {
     return (
@@ -65,10 +34,7 @@ export default function BuyerProductDetailsScreen() {
         <MarketplaceState
           error={error}
           isLoading={isLoading}
-          onRetry={() => {
-            setIsLoading(true);
-            setRefreshKey((current) => current + 1);
-          }}
+          onRetry={refresh}
         />
       </SafeAreaView>
     );
@@ -77,6 +43,7 @@ export default function BuyerProductDetailsScreen() {
   const price = getProductPrice(product);
   const supportsFixedPrice = product.pricingMode !== 'bidding';
   const supportsBidding = product.pricingMode !== 'fixedPrice';
+  const selectedQuantity = quantity || product.minimumOrderQuantity;
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -158,11 +125,43 @@ export default function BuyerProductDetailsScreen() {
             'Fresh Sri Lankan produce supplied directly by a registered AgriLink farmer.'}
         </Text>
 
+        {supportsFixedPrice ? (
+          <View style={styles.quantityRow}>
+            <Text style={styles.quantityLabel}>Quantity</Text>
+            <View style={styles.quantityControl}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  setQuantity(Math.max(product.minimumOrderQuantity, selectedQuantity - 1))
+                }
+                style={styles.quantityButton}>
+                <Text style={styles.quantityButtonText}>−</Text>
+              </Pressable>
+              <Text style={styles.quantityValue}>
+                {selectedQuantity.toLocaleString('en-LK')} {product.unit}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  setQuantity(Math.min(product.availableQuantity, selectedQuantity + 1))
+                }
+                style={styles.quantityButton}>
+                <Text style={styles.quantityButtonText}>+</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           {supportsFixedPrice ? (
             <Pressable
               accessibilityRole="button"
-              onPress={() => Alert.alert('Buyer Stage 3', 'Fixed-price ordering is the next stage.')}
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/buyer/checkout/[productId]',
+                  params: { productId, quantity: String(selectedQuantity) },
+                })
+              }
               style={[styles.actionButton, styles.softButton]}>
               <Text style={styles.softButtonText}>Fixed Price Buy</Text>
             </Pressable>
@@ -170,7 +169,12 @@ export default function BuyerProductDetailsScreen() {
           {supportsBidding ? (
             <Pressable
               accessibilityRole="button"
-              onPress={() => Alert.alert('Buyer Stage 3', 'The bidding flow is the next stage.')}
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/buyer/bid/[productId]',
+                  params: { productId },
+                })
+              }
               style={[styles.actionButton, styles.outlineButton]}>
               <Text style={styles.outlineButtonText}>Place a Bid</Text>
             </Pressable>
@@ -331,6 +335,43 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     paddingHorizontal: 16,
     paddingTop: 20,
+  },
+  quantityRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  quantityLabel: {
+    color: '#4D504D',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  quantityControl: {
+    alignItems: 'center',
+    borderColor: BrandColors.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    minHeight: 42,
+  },
+  quantityButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 38,
+  },
+  quantityButtonText: {
+    color: '#555855',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  quantityValue: {
+    color: '#555855',
+    fontSize: 14,
+    fontWeight: '800',
+    minWidth: 82,
+    textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',
