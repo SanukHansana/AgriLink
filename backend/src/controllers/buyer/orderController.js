@@ -71,6 +71,16 @@ function createBuyerOrder(orderType) {
         });
       }
 
+      if (
+        orderType === 'advance' &&
+        product.harvestDate &&
+        deliveryDate < new Date(product.harvestDate)
+      ) {
+        return response.status(400).json({
+          message: 'Requested delivery date cannot be before the expected harvest date',
+        });
+      }
+
       const effectivePrice = product.fixedPrice ?? pricePerUnit;
       if (!isPositiveNumber(effectivePrice)) {
         return response.status(400).json({

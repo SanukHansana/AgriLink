@@ -12,6 +12,10 @@ import {
   updateBuyerProfile,
 } from '../controllers/buyer/buyerProfileController.js';
 import {
+  createBuyerComplaint,
+  createBuyerReview,
+} from '../controllers/buyer/feedbackController.js';
+import {
   createAdvanceOrder,
   createFixedPriceOrder,
   getBuyerOrder,
@@ -46,5 +50,7 @@ router.post('/orders/fixed-price', createFixedPriceOrder);
 router.post('/orders/advance', createAdvanceOrder);
 router.get('/orders', getBuyerOrders);
 router.get('/orders/:orderId', getBuyerOrder);
+router.post('/orders/:orderId/reviews', createBuyerReview);
+router.post('/orders/:orderId/complaints', createBuyerComplaint);
 
 export default router;

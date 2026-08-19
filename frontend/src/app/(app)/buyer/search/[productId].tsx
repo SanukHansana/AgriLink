@@ -159,11 +159,17 @@ export default function BuyerProductDetailsScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/(app)/buyer/checkout/[productId]',
-                  params: { productId, quantity: String(selectedQuantity) },
+                  params: {
+                    productId,
+                    quantity: String(selectedQuantity),
+                    orderType: product.listingType === 'future' ? 'advance' : 'fixedPrice',
+                  },
                 })
               }
               style={[styles.actionButton, styles.softButton]}>
-              <Text style={styles.softButtonText}>Fixed Price Buy</Text>
+              <Text style={styles.softButtonText}>
+                {product.listingType === 'future' ? 'Advance Order' : 'Fixed Price Buy'}
+              </Text>
             </Pressable>
           ) : null}
           {supportsBidding ? (
