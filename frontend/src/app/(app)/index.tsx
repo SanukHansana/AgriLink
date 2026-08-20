@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,6 +34,10 @@ export default function RoleHomeScreen() {
 
   if (user.role === 'buyer') {
     return <Redirect href="/(app)/buyer" />;
+  }
+
+  if (user.role === 'driver') {
+    return <Redirect href={'/(app)/driver' as Href} />;
   }
 
   const content = roleContent[user.role];
