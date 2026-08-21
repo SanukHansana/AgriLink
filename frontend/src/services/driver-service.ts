@@ -4,7 +4,10 @@ import { api } from '@/services/api';
 import type {
   DeliveryJob,
   DeliveryJobStatus,
+  DeliveryIssue,
+  DeliveryIssueInput,
   DeliveryStatusInput,
+  DriverEarningsData,
   DriverAvailabilityStatus,
   DriverProfile,
   DriverProfileInput,
@@ -80,6 +83,24 @@ export async function acceptDriverJob(jobId: string, vehicleId: string) {
 export async function updateDriverJobStatus(jobId: string, input: DeliveryStatusInput) {
   const response = await api.patch<{ message: string; job: DeliveryJob }>(
     `/drivers/jobs/${jobId}/status`,
+    input,
+  );
+  return response.data;
+}
+
+export async function getDriverEarnings() {
+  const response = await api.get<DriverEarningsData>('/drivers/earnings');
+  return response.data;
+}
+
+export async function getDriverIssues() {
+  const response = await api.get<{ count: number; issues: DeliveryIssue[] }>('/drivers/issues');
+  return response.data;
+}
+
+export async function createDriverIssue(input: DeliveryIssueInput) {
+  const response = await api.post<{ issue: DeliveryIssue; message: string }>(
+    '/drivers/issues',
     input,
   );
   return response.data;

@@ -7,7 +7,7 @@ import { BrandColors } from '@/constants/theme';
 import { useDriverOverview } from '@/hooks/use-driver-overview';
 import type { DeliveryContactLocation, DeliveryJobStatus } from '@/types/logistics';
 
-const progressSteps: Array<{ label: string; status: DeliveryJobStatus }> = [
+const progressSteps: { label: string; status: DeliveryJobStatus }[] = [
   { label: 'Job Accepted', status: 'accepted' },
   { label: 'Arrived at Pickup', status: 'collecting' },
   { label: 'In Transit', status: 'inTransit' },
@@ -143,6 +143,12 @@ export default function DriverActiveDeliveryScreen() {
           style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Update Delivery Status</Text>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(`/driver/issues/new?jobId=${job._id}` as Href)}
+          style={styles.issueButton}>
+          <Text style={styles.issueButtonText}>Report a Delivery Issue</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -197,4 +203,6 @@ const styles = StyleSheet.create({
   currentProgress: { color: BrandColors.primary, fontWeight: '800' },
   primaryButton: { alignItems: 'center', backgroundColor: BrandColors.primary, borderRadius: 24, marginHorizontal: 16, marginTop: 18, paddingVertical: 14 },
   primaryButtonText: { color: BrandColors.white, fontSize: 13, fontWeight: '800' },
+  issueButton: { alignItems: 'center', borderColor: BrandColors.warning, borderRadius: 24, borderWidth: 1, marginHorizontal: 16, marginTop: 10, paddingVertical: 13 },
+  issueButtonText: { color: BrandColors.warning, fontSize: 12, fontWeight: '800' },
 });

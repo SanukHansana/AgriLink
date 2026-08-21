@@ -13,6 +13,11 @@ import {
   updateDriverProfile,
 } from '../controllers/driver/driverProfileController.js';
 import {
+  createDeliveryIssue,
+  getDeliveryIssues,
+  getDriverEarnings,
+} from '../controllers/driver/driverReportController.js';
+import {
   createVehicle,
   deleteDriverVehicle,
   getDriverVehicle,
@@ -44,5 +49,7 @@ router.get('/jobs', getDriverDeliveryJobs);
 router.get('/jobs/:jobId', getDriverDeliveryJob);
 router.post('/jobs/:jobId/accept', acceptDeliveryJob);
 router.patch('/jobs/:jobId/status', updateDeliveryJobStatus);
+router.get('/earnings', getDriverEarnings);
+router.route('/issues').post(createDeliveryIssue).get(getDeliveryIssues);
 
 export default router;

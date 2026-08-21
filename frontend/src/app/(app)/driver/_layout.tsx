@@ -59,6 +59,8 @@ export default function DriverTabsLayout() {
         }}
       />
       <Tabs.Screen name="status" options={{ href: null }} />
+      <Tabs.Screen name="earnings" options={{ href: null }} />
+      <Tabs.Screen name="issues" options={{ href: null }} />
     </Tabs>
   );
 }

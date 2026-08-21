@@ -21,7 +21,7 @@ import { getApiErrorMessage } from '@/services/api';
 import { createDriverProfile, createDriverVehicle } from '@/services/driver-service';
 import type { VehicleType } from '@/types/logistics';
 
-const vehicleTypes: Array<{ label: string; value: VehicleType }> = [
+const vehicleTypes: { label: string; value: VehicleType }[] = [
   { label: 'Motorcycle', value: 'motorcycle' },
   { label: 'Three-wheeler', value: 'threeWheeler' },
   { label: 'Van', value: 'van' },

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,9 +21,15 @@ export default function DriverJobDetailsScreen() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const capableVehicles = job
-    ? overview.vehicles.filter((vehicle) => vehicle.isActive && vehicle.capacityKg >= job.totalWeightKg)
-    : [];
+  const capableVehicles = useMemo(
+    () =>
+      job
+        ? overview.vehicles.filter(
+            (vehicle) => vehicle.isActive && vehicle.capacityKg >= job.totalWeightKg,
+          )
+        : [],
+    [job, overview.vehicles],
+  );
 
   useEffect(() => {
     if (!selectedVehicleId && capableVehicles[0]) {

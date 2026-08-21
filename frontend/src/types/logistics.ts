@@ -103,7 +103,7 @@ export type DeliveryJob = {
   _id: string;
   jobCode: string;
   createdBy: string | { _id: string; name: string };
-  orders: Array<string | DeliveryOrderSummary>;
+  orders: (string | DeliveryOrderSummary)[];
   pickupPoints: DeliveryPickupPoint[];
   destination: DeliveryContactLocation;
   cargoDescription: string;
@@ -133,4 +133,53 @@ export type DeliveryStatusInput = {
     receiverName: string;
     receiverSignature: string;
   };
+};
+
+export type DriverEarningsData = {
+  summary: {
+    monthEarnings: number;
+    todayEarnings: number;
+    totalEarnings: number;
+    totalTrips: number;
+  };
+  weekly: {
+    amount: number;
+    date: string;
+    label: string;
+  }[];
+  transactions: Pick<
+      DeliveryJob,
+      '_id' | 'jobCode' | 'cargoDescription' | 'payoutAmount' | 'deliveredAt' | 'destination' | 'scheduledPickupAt'
+    >[];
+};
+
+export type DeliveryIssueType =
+  | 'delay'
+  | 'vehicle'
+  | 'cargo'
+  | 'route'
+  | 'customer'
+  | 'payment'
+  | 'other';
+export type DeliveryIssueStatus = 'open' | 'inReview' | 'resolved';
+
+export type DeliveryIssue = {
+  _id: string;
+  job: string | Pick<DeliveryJob, '_id' | 'jobCode' | 'cargoDescription' | 'status'>;
+  driver: string;
+  issueType: DeliveryIssueType;
+  description: string;
+  photoAttached: boolean;
+  status: DeliveryIssueStatus;
+  resolution?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DeliveryIssueInput = {
+  jobId: string;
+  issueType: DeliveryIssueType;
+  description: string;
+  photoData?: string;
 };
