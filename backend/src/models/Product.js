@@ -13,7 +13,7 @@ export const PRODUCT_CATEGORIES = [
 ];
 export const LISTING_TYPES = ['current', 'future'];
 export const PRICING_MODES = ['fixedPrice', 'bidding', 'both'];
-export const PRODUCT_STATUSES = ['active', 'inactive', 'sold'];
+export const PRODUCT_STATUSES = ['active', 'pending', 'inactive', 'sold'];
 
 const farmLocationSchema = new mongoose.Schema(
   {
