@@ -21,6 +21,16 @@ const JOB_FIELDS = [
 ];
 
 const ACTIVE_JOB_STATUSES = ['accepted', 'collecting', 'inTransit'];
+const STATUS_TRANSITIONS = {
+  accepted: 'collecting',
+  collecting: 'inTransit',
+  inTransit: 'delivered',
+};
+const STATUS_TIMESTAMPS = {
+  collecting: 'pickupArrivedAt',
+  inTransit: 'transitStartedAt',
+  delivered: 'deliveredAt',
+};
 
 function jobData(body) {
   return JOB_FIELDS.reduce((job, field) => {
@@ -351,6 +361,9 @@ export async function acceptDeliveryJob(request, response, next) {
             status: 'accepted',
             acceptedAt: new Date(),
           },
+          $push: {
+            statusUpdates: { status: 'accepted', note: 'Delivery job accepted' },
+          },
         },
         { new: true, runValidators: true },
       ),
@@ -366,6 +379,110 @@ export async function acceptDeliveryJob(request, response, next) {
 
     return response.status(200).json({
       message: 'Delivery job accepted successfully',
+      job,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function updateDeliveryJobStatus(request, response, next) {
+  try {
+    const { jobId } = request.params;
+    const { note, proof, status } = request.body;
+    if (!isValidMongoId(jobId)) {
+      return response.status(400).json({ message: 'Enter a valid delivery job ID' });
+    }
+    if (!['collecting', 'inTransit', 'delivered'].includes(status)) {
+      return response.status(400).json({ message: 'Enter a valid active delivery status' });
+    }
+    if (note !== undefined && (typeof note !== 'string' || note.trim().length > 500)) {
+      return response.status(400).json({ message: 'Status note cannot exceed 500 characters' });
+    }
+
+    const currentJob = await DeliveryJob.findOne({
+      _id: jobId,
+      assignedDriver: request.user._id,
+      status: { $in: ACTIVE_JOB_STATUSES },
+    });
+    if (!currentJob) {
+      return response.status(404).json({ message: 'Active delivery job not found' });
+    }
+    if (STATUS_TRANSITIONS[currentJob.status] !== status) {
+      return response.status(409).json({
+        message: `The next delivery status must be ${STATUS_TRANSITIONS[currentJob.status]}`,
+      });
+    }
+
+    const updateTime = new Date();
+    const update = {
+      $set: {
+        status,
+        [STATUS_TIMESTAMPS[status]]: updateTime,
+      },
+      $push: {
+        statusUpdates: {
+          status,
+          note: note?.trim() || undefined,
+          recordedAt: updateTime,
+        },
+      },
+    };
+
+    if (status === 'delivered') {
+      const photoData = proof?.photoData;
+      const receiverName = proof?.receiverName?.trim();
+      const receiverSignature = proof?.receiverSignature?.trim();
+      if (
+        typeof photoData !== 'string' ||
+        !/^data:image\/(?:jpeg|png|webp);base64,/.test(photoData) ||
+        photoData.length > 900000
+      ) {
+        return response.status(400).json({ message: 'Attach a valid proof photo under 650 KB' });
+      }
+      if (!receiverName || !receiverSignature) {
+        return response.status(400).json({
+          message: 'Receiver name and signature confirmation are required',
+        });
+      }
+      update.$set.deliveryProof = {
+        photoData,
+        photoAttached: true,
+        receiverName,
+        receiverSignature,
+        confirmedAt: updateTime,
+      };
+    }
+
+    const job = await populateJob(
+      DeliveryJob.findOneAndUpdate(
+        {
+          _id: currentJob._id,
+          assignedDriver: request.user._id,
+          status: currentJob.status,
+        },
+        update,
+        { new: true, runValidators: true },
+      ),
+    );
+    if (!job) {
+      return response.status(409).json({ message: 'Delivery status changed; refresh and try again' });
+    }
+
+    await Order.updateMany(
+      { _id: { $in: currentJob.orders }, status: { $ne: 'cancelled' } },
+      { $set: { status: status === 'collecting' ? 'dispatched' : status } },
+    );
+
+    if (status === 'delivered') {
+      await DriverProfile.updateOne(
+        { user: request.user._id },
+        { $set: { availabilityStatus: 'available' } },
+      );
+    }
+
+    return response.status(200).json({
+      message: 'Delivery status updated successfully',
       job,
     });
   } catch (error) {

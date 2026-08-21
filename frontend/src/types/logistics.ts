@@ -86,6 +86,19 @@ export type DeliveryOrderSummary = {
   status: string;
 };
 
+export type DeliveryStatusUpdate = {
+  status: DeliveryJobStatus;
+  note?: string;
+  recordedAt: string;
+};
+
+export type DeliveryProof = {
+  photoAttached: boolean;
+  receiverName?: string;
+  receiverSignature?: string;
+  confirmedAt?: string;
+};
+
 export type DeliveryJob = {
   _id: string;
   jobCode: string;
@@ -103,6 +116,21 @@ export type DeliveryJob = {
   assignedDriver?: string | { _id: string; name: string };
   vehicle?: string | DriverVehicle;
   acceptedAt?: string;
+  pickupArrivedAt?: string;
+  transitStartedAt?: string;
+  deliveredAt?: string;
+  deliveryProof?: DeliveryProof;
+  statusUpdates: DeliveryStatusUpdate[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type DeliveryStatusInput = {
+  status: Extract<DeliveryJobStatus, 'collecting' | 'inTransit' | 'delivered'>;
+  note?: string;
+  proof?: {
+    photoData: string;
+    receiverName: string;
+    receiverSignature: string;
+  };
 };

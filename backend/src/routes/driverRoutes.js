@@ -4,6 +4,7 @@ import {
   acceptDeliveryJob,
   getDriverDeliveryJob,
   getDriverDeliveryJobs,
+  updateDeliveryJobStatus,
 } from '../controllers/driver/deliveryJobController.js';
 import {
   createDriverProfile,
@@ -42,5 +43,6 @@ router
 router.get('/jobs', getDriverDeliveryJobs);
 router.get('/jobs/:jobId', getDriverDeliveryJob);
 router.post('/jobs/:jobId/accept', acceptDeliveryJob);
+router.patch('/jobs/:jobId/status', updateDeliveryJobStatus);
 
 export default router;

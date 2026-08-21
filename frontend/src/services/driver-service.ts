@@ -4,6 +4,7 @@ import { api } from '@/services/api';
 import type {
   DeliveryJob,
   DeliveryJobStatus,
+  DeliveryStatusInput,
   DriverAvailabilityStatus,
   DriverProfile,
   DriverProfileInput,
@@ -72,6 +73,14 @@ export async function acceptDriverJob(jobId: string, vehicleId: string) {
   const response = await api.post<{ message: string; job: DeliveryJob }>(
     `/drivers/jobs/${jobId}/accept`,
     { vehicleId },
+  );
+  return response.data;
+}
+
+export async function updateDriverJobStatus(jobId: string, input: DeliveryStatusInput) {
+  const response = await api.patch<{ message: string; job: DeliveryJob }>(
+    `/drivers/jobs/${jobId}/status`,
+    input,
   );
   return response.data;
 }
