@@ -58,6 +58,7 @@ export default function DriverTabsLayout() {
           tabBarIcon: ({ color }) => <DriverTabIcon color={color} name="profile" />,
         }}
       />
+      <Tabs.Screen name="status" options={{ href: null }} />
     </Tabs>
   );
 }

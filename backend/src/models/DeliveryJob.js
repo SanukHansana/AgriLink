@@ -65,6 +65,52 @@ const destinationSchema = new mongoose.Schema(contactLocationFields, {
   versionKey: false,
 });
 
+const deliveryProofSchema = new mongoose.Schema(
+  {
+    photoData: {
+      type: String,
+      select: false,
+      maxlength: [900000, 'Proof photo is too large'],
+    },
+    photoAttached: {
+      type: Boolean,
+      default: false,
+    },
+    receiverName: {
+      type: String,
+      trim: true,
+      maxlength: [80, 'Receiver name cannot exceed 80 characters'],
+    },
+    receiverSignature: {
+      type: String,
+      trim: true,
+      maxlength: [120, 'Receiver signature cannot exceed 120 characters'],
+    },
+    confirmedAt: Date,
+  },
+  { _id: false, versionKey: false },
+);
+
+const statusUpdateSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: DELIVERY_JOB_STATUSES,
+      required: true,
+    },
+    note: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Status note cannot exceed 500 characters'],
+    },
+    recordedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false, versionKey: false },
+);
+
 const deliveryJobSchema = new mongoose.Schema(
   {
     jobCode: {
@@ -144,6 +190,14 @@ const deliveryJobSchema = new mongoose.Schema(
       ref: 'Vehicle',
     },
     acceptedAt: Date,
+    pickupArrivedAt: Date,
+    transitStartedAt: Date,
+    deliveredAt: Date,
+    deliveryProof: deliveryProofSchema,
+    statusUpdates: {
+      type: [statusUpdateSchema],
+      default: [],
+    },
   },
   {
     timestamps: true,

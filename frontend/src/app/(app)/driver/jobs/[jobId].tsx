@@ -66,9 +66,9 @@ export default function DriverJobDetailsScreen() {
           </View>
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.replace('/(app)/driver' as Href)}
+            onPress={() => router.replace('/(app)/driver/active' as Href)}
             style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Back to Dashboard</Text>
+            <Text style={styles.primaryButtonText}>Go to Active Delivery</Text>
           </Pressable>
         </View>
       </SafeAreaView>
