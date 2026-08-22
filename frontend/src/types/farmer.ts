@@ -54,3 +54,49 @@ export type FarmerProductInput = {
   biddingClosesAt?: string;
   status?: MarketplaceProduct['status'];
 };
+
+export type CooperativeMember = {
+  farmer: string | { _id: string; name: string };
+  role: 'owner' | 'member';
+  joinedAt: string;
+};
+
+export type CooperativeProductPool = {
+  _id: string;
+  name: string;
+  category: ProductCategory;
+  unit: ProductUnit;
+  totalQuantity: number;
+  contributions: {
+    farmer: string;
+    quantity: number;
+    qualityGrade?: string;
+  }[];
+};
+
+export type Cooperative = {
+  _id: string;
+  name: string;
+  description?: string;
+  district: string;
+  createdBy: string | { _id: string; name: string };
+  members: CooperativeMember[];
+  productPools: CooperativeProductPool[];
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CooperativeInput = {
+  name: string;
+  description?: string;
+  district: string;
+};
+
+export type CooperativeContributionInput = {
+  name: string;
+  category: ProductCategory;
+  unit: ProductUnit;
+  quantity: number;
+  qualityGrade?: string;
+};
