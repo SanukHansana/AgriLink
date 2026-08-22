@@ -40,6 +40,10 @@ export default function RoleHomeScreen() {
     return <Redirect href={'/(app)/driver' as Href} />;
   }
 
+  if (user.role === 'farmer') {
+    return <Redirect href={'/(app)/farmer' as Href} />;
+  }
+
   const content = roleContent[user.role];
 
   return (
