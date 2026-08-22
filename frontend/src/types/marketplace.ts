@@ -40,7 +40,7 @@ export type MarketplaceProduct = {
   fixedPrice?: number;
   minimumBidPrice?: number;
   biddingClosesAt?: string;
-  status: 'active' | 'inactive' | 'sold';
+  status: 'active' | 'pending' | 'inactive' | 'sold';
   createdAt: string;
   updatedAt: string;
 };
