@@ -1,6 +1,15 @@
 import { Router } from 'express';
 
 import { getFarmerBids, updateFarmerBidStatus } from '../controllers/farmer/bidController.js';
+import {
+  addCooperativeContribution,
+  createCooperative,
+  getCooperative,
+  getCooperatives,
+  joinCooperative,
+  leaveCooperative,
+  publishCooperativeProduct,
+} from '../controllers/farmer/cooperativeController.js';
 
 import {
   createFarmerProfile,
@@ -47,5 +56,15 @@ router.patch('/bids/:bidId/status', updateFarmerBidStatus);
 router.get('/orders', getFarmerOrders);
 router.get('/orders/:orderId', getFarmerOrder);
 router.patch('/orders/:orderId/status', updateFarmerOrderStatus);
+
+router.route('/cooperatives').post(createCooperative).get(getCooperatives);
+router.get('/cooperatives/:cooperativeId', getCooperative);
+router.post('/cooperatives/:cooperativeId/join', joinCooperative);
+router.delete('/cooperatives/:cooperativeId/membership', leaveCooperative);
+router.post('/cooperatives/:cooperativeId/contributions', addCooperativeContribution);
+router.post(
+  '/cooperatives/:cooperativeId/product-pools/:poolId/list',
+  publishCooperativeProduct,
+);
 
 export default router;
