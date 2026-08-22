@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { api } from '@/services/api';
 import type { FarmerProductInput, FarmerProfile, FarmerProfileInput } from '@/types/farmer';
 import type { ListingType, MarketplaceProduct } from '@/types/marketplace';
+import type { BidStatus, BuyerBid, BuyerOrder, OrderStatus } from '@/types/transactions';
 
 export async function getFarmerProfile() {
   try {
@@ -69,4 +70,37 @@ export async function deactivateFarmerProduct(productId: string) {
     `/farmers/products/${productId}`,
   );
   return response.data.product;
+}
+
+export async function getFarmerBids(filters: { productId?: string; status?: BidStatus } = {}) {
+  const response = await api.get<{ count: number; bids: BuyerBid[] }>('/farmers/bids', {
+    params: filters,
+  });
+  return response.data;
+}
+
+export async function updateFarmerBidStatus(bidId: string, status: 'accepted' | 'rejected') {
+  const response = await api.patch<{ message: string; bid: BuyerBid }>(
+    `/farmers/bids/${bidId}/status`,
+    { status },
+  );
+  return response.data.bid;
+}
+
+export async function getFarmerOrders(status?: OrderStatus) {
+  const response = await api.get<{ count: number; orders: BuyerOrder[] }>('/farmers/orders', {
+    params: { status },
+  });
+  return response.data;
+}
+
+export async function updateFarmerOrderStatus(
+  orderId: string,
+  status: Extract<OrderStatus, 'confirmed' | 'preparing' | 'dispatched' | 'cancelled'>,
+) {
+  const response = await api.patch<{ message: string; order: BuyerOrder }>(
+    `/farmers/orders/${orderId}/status`,
+    { status },
+  );
+  return response.data.order;
 }
