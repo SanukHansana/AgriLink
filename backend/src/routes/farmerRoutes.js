@@ -1,11 +1,18 @@
 import { Router } from 'express';
 
+import { getFarmerBids, updateFarmerBidStatus } from '../controllers/farmer/bidController.js';
+
 import {
   createFarmerProfile,
   deleteFarmerProfile,
   getFarmerProfile,
   updateFarmerProfile,
 } from '../controllers/farmer/farmerProfileController.js';
+import {
+  getFarmerOrder,
+  getFarmerOrders,
+  updateFarmerOrderStatus,
+} from '../controllers/farmer/orderController.js';
 import {
   createFarmerProduct,
   deactivateFarmerProduct,
@@ -33,5 +40,12 @@ router
   .get(getFarmerProduct)
   .patch(updateFarmerProduct)
   .delete(deactivateFarmerProduct);
+
+router.get('/bids', getFarmerBids);
+router.patch('/bids/:bidId/status', updateFarmerBidStatus);
+
+router.get('/orders', getFarmerOrders);
+router.get('/orders/:orderId', getFarmerOrder);
+router.patch('/orders/:orderId/status', updateFarmerOrderStatus);
 
 export default router;

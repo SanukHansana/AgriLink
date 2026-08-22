@@ -15,6 +15,7 @@ export default function FarmerTabsLayout() {
       <Tabs.Screen name="orders" options={{ title: 'Orders', tabBarIcon: ({ color }) => <FarmerTabIcon color={color} name="orders" /> }} />
       <Tabs.Screen name="cooperative" options={{ title: 'Co-op', tabBarIcon: ({ color }) => <FarmerTabIcon color={color} name="cooperative" /> }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <FarmerTabIcon color={color} name="profile" /> }} />
+      <Tabs.Screen name="bids" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -9,7 +9,7 @@ export type BidProductSummary = {
   unit: ProductUnit;
   minimumBidPrice?: number;
   biddingClosesAt?: string;
-  status: 'active' | 'inactive' | 'sold';
+  status: 'active' | 'pending' | 'inactive' | 'sold';
   farmLocation?: {
     district: string;
   };
@@ -17,7 +17,7 @@ export type BidProductSummary = {
 
 export type BuyerBid = {
   _id: string;
-  buyer: string;
+  buyer: string | { _id: string; name: string; email?: string };
   product: string | BidProductSummary;
   bidAmount: number;
   quantity: number;
@@ -59,7 +59,7 @@ export type OrderProductSummary = {
 export type BuyerOrder = {
   _id: string;
   orderCode: string;
-  buyer: string;
+  buyer: string | { _id: string; name: string; email?: string };
   seller: string | { _id: string; name: string };
   product: string | OrderProductSummary;
   orderType: 'fixedPrice' | 'advance';
