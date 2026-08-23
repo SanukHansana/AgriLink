@@ -3,12 +3,17 @@ import { isAxiosError } from 'axios';
 import { api } from '@/services/api';
 import type {
   AdvisoryNotice,
+  AdvisoryNoticeInput,
   AssistanceRequest,
   AssistanceRequestCategory,
   AssistanceRequestPriority,
   AssistanceRequestStatus,
   OfficerProfile,
   OfficialResponseType,
+  QualityGuideline,
+  QualityGuidelineInput,
+  SurplusAdvisory,
+  SurplusAdvisoryInput,
 } from '@/types/advisory';
 
 export async function getOfficerProfile() {
@@ -75,4 +80,72 @@ export async function getOfficerNotices(status?: AdvisoryNotice['status']) {
     params: { status },
   });
   return response.data.notices;
+}
+
+export async function createNotice(input: AdvisoryNoticeInput) {
+  const response = await api.post<{ message: string; notice: AdvisoryNotice }>(
+    '/advisory/notices',
+    input,
+  );
+  return response.data.notice;
+}
+
+export async function publishNotice(noticeId: string) {
+  const response = await api.post<{ message: string; notice: AdvisoryNotice }>(
+    `/advisory/notices/${noticeId}/publish`,
+  );
+  return response.data.notice;
+}
+
+export async function archiveNotice(noticeId: string) {
+  const response = await api.post<{ message: string; notice: AdvisoryNotice }>(
+    `/advisory/notices/${noticeId}/archive`,
+  );
+  return response.data.notice;
+}
+
+export async function getQualityGuidelines(status?: QualityGuideline['status']) {
+  const response = await api.get<{ guidelines: QualityGuideline[] }>(
+    '/advisory/quality-guidelines',
+    { params: { status } },
+  );
+  return response.data.guidelines;
+}
+
+export async function createQualityGuideline(input: QualityGuidelineInput) {
+  const response = await api.post<{ guideline: QualityGuideline; message: string }>(
+    '/advisory/quality-guidelines',
+    input,
+  );
+  return response.data.guideline;
+}
+
+export async function archiveQualityGuideline(guidelineId: string) {
+  const response = await api.post<{ guideline: QualityGuideline; message: string }>(
+    `/advisory/quality-guidelines/${guidelineId}/archive`,
+  );
+  return response.data.guideline;
+}
+
+export async function getSurplusAdvisories(status?: SurplusAdvisory['status']) {
+  const response = await api.get<{ advisories: SurplusAdvisory[] }>(
+    '/advisory/surplus-advisories',
+    { params: { status } },
+  );
+  return response.data.advisories;
+}
+
+export async function createSurplusAdvisory(input: SurplusAdvisoryInput) {
+  const response = await api.post<{ advisory: SurplusAdvisory; message: string }>(
+    '/advisory/surplus-advisories',
+    input,
+  );
+  return response.data.advisory;
+}
+
+export async function resolveSurplusAdvisory(advisoryId: string) {
+  const response = await api.post<{ advisory: SurplusAdvisory; message: string }>(
+    `/advisory/surplus-advisories/${advisoryId}/resolve`,
+  );
+  return response.data.advisory;
 }
