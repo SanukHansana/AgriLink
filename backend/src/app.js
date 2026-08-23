@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 
 import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
+import advisoryRoutes from './routes/advisoryRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import buyerRoutes from './routes/buyerRoutes.js';
 import driverRoutes from './routes/driverRoutes.js';
@@ -22,6 +23,7 @@ app.get('/api/health', (_request, response) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/advisory', advisoryRoutes);
 app.use('/api/buyers', buyerRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/farmers', farmerRoutes);
