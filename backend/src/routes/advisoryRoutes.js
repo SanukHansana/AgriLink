@@ -24,6 +24,18 @@ import {
   getOfficerProfile,
   updateOfficerProfile,
 } from '../controllers/advisory/officerProfileController.js';
+import {
+  archiveQualityGuideline,
+  createQualityGuideline,
+  getQualityGuidelines,
+  updateQualityGuideline,
+} from '../controllers/advisory/qualityGuidelineController.js';
+import {
+  createSurplusAdvisory,
+  getSurplusAdvisories,
+  resolveSurplusAdvisory,
+  updateSurplusAdvisory,
+} from '../controllers/advisory/surplusAdvisoryController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { requireRole } from '../middleware/roleMiddleware.js';
 
@@ -64,5 +76,27 @@ router
   .delete(requireOfficer, deleteNotice);
 router.post('/notices/:noticeId/publish', requireOfficer, publishNotice);
 router.post('/notices/:noticeId/archive', requireOfficer, archiveNotice);
+
+router
+  .route('/quality-guidelines')
+  .post(requireOfficer, createQualityGuideline)
+  .get(allowAdvisoryUsers, getQualityGuidelines);
+router.patch('/quality-guidelines/:guidelineId', requireOfficer, updateQualityGuideline);
+router.post(
+  '/quality-guidelines/:guidelineId/archive',
+  requireOfficer,
+  archiveQualityGuideline,
+);
+
+router
+  .route('/surplus-advisories')
+  .post(requireOfficer, createSurplusAdvisory)
+  .get(allowAdvisoryUsers, getSurplusAdvisories);
+router.patch('/surplus-advisories/:advisoryId', requireOfficer, updateSurplusAdvisory);
+router.post(
+  '/surplus-advisories/:advisoryId/resolve',
+  requireOfficer,
+  resolveSurplusAdvisory,
+);
 
 export default router;

@@ -99,3 +99,64 @@ export type AdvisoryNotice = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type AdvisoryNoticeInput = Pick<
+  AdvisoryNotice,
+  'type' | 'title' | 'description' | 'targetAudience' | 'languages' | 'isEmergency'
+> & {
+  targetDistrict?: string;
+};
+
+export type QualityGuideline = {
+  _id: string;
+  officer: AdvisoryUser;
+  cropName: string;
+  growingRegion?: string;
+  maxMoisture: string;
+  minPurity: string;
+  sizingGrade: string;
+  requiredCertification: string;
+  status: 'active' | 'archived';
+  effectiveDate: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type QualityGuidelineInput = Pick<
+  QualityGuideline,
+  | 'cropName'
+  | 'growingRegion'
+  | 'maxMoisture'
+  | 'minPurity'
+  | 'sizingGrade'
+  | 'requiredCertification'
+> & {
+  effectiveDate?: string;
+};
+
+export type SurplusAdvisory = {
+  _id: string;
+  officer: AdvisoryUser;
+  cropName: string;
+  harvestSeason?: string;
+  affectedDistricts: string[];
+  surplusVolumeMt: number;
+  level: 'critical' | 'moderate' | 'normal';
+  priceImpactPercent: number;
+  recommendedActions: string[];
+  status: 'active' | 'resolved';
+  issuedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SurplusAdvisoryInput = Pick<
+  SurplusAdvisory,
+  | 'cropName'
+  | 'harvestSeason'
+  | 'affectedDistricts'
+  | 'surplusVolumeMt'
+  | 'level'
+  | 'priceImpactPercent'
+  | 'recommendedActions'
+>;
