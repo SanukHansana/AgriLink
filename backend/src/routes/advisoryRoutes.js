@@ -1,6 +1,9 @@
 import { Router } from 'express';
 
 import {
+  getAdvisoryReportOverview,
+} from '../controllers/advisory/advisoryReportController.js';
+import {
   createAssistanceRequest,
   deleteAssistanceRequest,
   getAssistanceRequest,
@@ -31,6 +34,11 @@ import {
   updateQualityGuideline,
 } from '../controllers/advisory/qualityGuidelineController.js';
 import {
+  createReportedListing,
+  getReportedListings,
+  reviewReportedListing,
+} from '../controllers/advisory/reportedListingController.js';
+import {
   createSurplusAdvisory,
   getSurplusAdvisories,
   resolveSurplusAdvisory,
@@ -42,6 +50,7 @@ import { requireRole } from '../middleware/roleMiddleware.js';
 const router = Router();
 const allowAdvisoryUsers = requireRole('farmer', 'agricultureOfficer');
 const requireFarmer = requireRole('farmer');
+const requireBuyer = requireRole('buyer');
 const requireOfficer = requireRole('agricultureOfficer');
 
 router.use(requireAuth);
@@ -98,5 +107,13 @@ router.post(
   requireOfficer,
   resolveSurplusAdvisory,
 );
+
+router
+  .route('/reported-listings')
+  .post(requireBuyer, createReportedListing)
+  .get(requireOfficer, getReportedListings);
+router.patch('/reported-listings/:reportId/review', requireOfficer, reviewReportedListing);
+
+router.get('/reports/overview', requireOfficer, getAdvisoryReportOverview);
 
 export default router;

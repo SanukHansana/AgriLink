@@ -51,6 +51,11 @@ export type OfficerProfile = {
   updatedAt: string;
 };
 
+export type OfficerProfileInput = Pick<
+  OfficerProfile,
+  'employeeId' | 'phone' | 'assignedCenter' | 'specialization' | 'division'
+>;
+
 export type AssistanceRequest = {
   _id: string;
   farmer: AdvisoryUser;
@@ -160,3 +165,60 @@ export type SurplusAdvisoryInput = Pick<
   | 'priceImpactPercent'
   | 'recommendedActions'
 >;
+
+export type ReportedListing = {
+  _id: string;
+  product: {
+    _id: string;
+    name: string;
+    category: string;
+    fixedPrice?: number;
+    unit: string;
+    status: string;
+    images: string[];
+    farmer?: AdvisoryUser;
+  };
+  farmer: AdvisoryUser;
+  reportedBy: AdvisoryUser;
+  reason:
+    | 'misleadingQuality'
+    | 'wrongPricing'
+    | 'prohibitedItem'
+    | 'duplicateListing'
+    | 'suspectedFraud'
+    | 'other';
+  description: string;
+  advertisedPrice?: number;
+  observedPrice?: number;
+  risk: 'low' | 'medium' | 'high';
+  status: 'pending' | 'inReview' | 'suspended' | 'dismissed' | 'resolved';
+  reviewedBy?: AdvisoryUser;
+  reviewNote?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdvisoryReportOverview = {
+  metrics: {
+    totalTradeValue: number;
+    totalQuantity: number;
+    activeFarmers: number;
+    requestsResolved: number;
+    activeNotices: number;
+    pendingReports: number;
+  };
+  categoryTrade: {
+    category: string;
+    quantity: number;
+    value: number;
+    percentage: number;
+  }[];
+  topCrops: {
+    name: string;
+    district: string;
+    quantity: number;
+    estimatedValue: number;
+  }[];
+  generatedAt: string;
+};

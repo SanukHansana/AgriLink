@@ -4,14 +4,17 @@ import { api } from '@/services/api';
 import type {
   AdvisoryNotice,
   AdvisoryNoticeInput,
+  AdvisoryReportOverview,
   AssistanceRequest,
   AssistanceRequestCategory,
   AssistanceRequestPriority,
   AssistanceRequestStatus,
   OfficerProfile,
+  OfficerProfileInput,
   OfficialResponseType,
   QualityGuideline,
   QualityGuidelineInput,
+  ReportedListing,
   SurplusAdvisory,
   SurplusAdvisoryInput,
 } from '@/types/advisory';
@@ -24,6 +27,22 @@ export async function getOfficerProfile() {
     if (isAxiosError(error) && error.response?.status === 404) return null;
     throw error;
   }
+}
+
+export async function createOfficerProfile(input: OfficerProfileInput) {
+  const response = await api.post<{ message: string; profile: OfficerProfile }>(
+    '/advisory/officer-profile',
+    input,
+  );
+  return response.data.profile;
+}
+
+export async function updateOfficerProfile(input: Partial<OfficerProfileInput>) {
+  const response = await api.patch<{ message: string; profile: OfficerProfile }>(
+    '/advisory/officer-profile',
+    input,
+  );
+  return response.data.profile;
 }
 
 export async function getAssistanceRequests(filters: {
@@ -148,4 +167,35 @@ export async function resolveSurplusAdvisory(advisoryId: string) {
     `/advisory/surplus-advisories/${advisoryId}/resolve`,
   );
   return response.data.advisory;
+}
+
+export async function getReportedListings(filters: {
+  risk?: ReportedListing['risk'];
+  status?: ReportedListing['status'];
+} = {}) {
+  const response = await api.get<{ reports: ReportedListing[] }>(
+    '/advisory/reported-listings',
+    { params: filters },
+  );
+  return response.data.reports;
+}
+
+export async function reviewReportedListing(
+  reportId: string,
+  input: {
+    action: 'review' | 'suspend' | 'dismiss' | 'resolve';
+    reviewNote?: string;
+    risk?: ReportedListing['risk'];
+  },
+) {
+  const response = await api.patch<{ message: string; report: ReportedListing }>(
+    `/advisory/reported-listings/${reportId}/review`,
+    input,
+  );
+  return response.data.report;
+}
+
+export async function getAdvisoryReportOverview() {
+  const response = await api.get<AdvisoryReportOverview>('/advisory/reports/overview');
+  return response.data;
 }
