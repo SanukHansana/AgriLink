@@ -5,6 +5,7 @@ const glyphs = {
   home: '⌂',
   search: '⌕',
   cart: '▣',
+  wanted: '+',
   orders: '☷',
   profile: '○',
 } as const;
@@ -19,9 +20,5 @@ export function BuyerTabIcon({ color, name }: BuyerTabIconProps) {
 }
 
 const styles = StyleSheet.create({
-  icon: {
-    fontSize: 26,
-    fontWeight: '700',
-    lineHeight: 27,
-  },
+  icon: { fontSize: 26, fontWeight: '700', lineHeight: 27 },
 });
