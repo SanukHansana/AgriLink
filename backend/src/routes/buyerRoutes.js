@@ -25,6 +25,13 @@ import {
   getMarketplaceProduct,
   searchMarketplaceProducts,
 } from '../controllers/buyer/marketplaceController.js';
+import {
+  createPurchaseRequest,
+  deletePurchaseRequest,
+  getPurchaseRequest,
+  getPurchaseRequests,
+  updatePurchaseRequest,
+} from '../controllers/buyer/purchaseRequestController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { requireRole } from '../middleware/roleMiddleware.js';
 
@@ -52,5 +59,12 @@ router.get('/orders', getBuyerOrders);
 router.get('/orders/:orderId', getBuyerOrder);
 router.post('/orders/:orderId/reviews', createBuyerReview);
 router.post('/orders/:orderId/complaints', createBuyerComplaint);
+
+router.route('/purchase-requests').post(createPurchaseRequest).get(getPurchaseRequests);
+router
+  .route('/purchase-requests/:requestId')
+  .get(getPurchaseRequest)
+  .patch(updatePurchaseRequest)
+  .delete(deletePurchaseRequest);
 
 export default router;

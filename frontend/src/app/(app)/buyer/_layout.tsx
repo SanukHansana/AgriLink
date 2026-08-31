@@ -44,10 +44,10 @@ export default function BuyerTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="cart"
+        name="wanted"
         options={{
-          title: 'Cart',
-          tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="cart" />,
+          title: 'Wanted',
+          tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="wanted" />,
         }}
       />
       <Tabs.Screen
@@ -69,6 +69,7 @@ export default function BuyerTabsLayout() {
       <Tabs.Screen name="checkout" options={{ href: null }} />
       <Tabs.Screen name="tracking" options={{ href: null }} />
       <Tabs.Screen name="feedback" options={{ href: null }} />
+      <Tabs.Screen name="cart" options={{ href: null }} />
     </Tabs>
   );
 }
