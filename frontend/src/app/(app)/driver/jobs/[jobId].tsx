@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +17,7 @@ export default function DriverJobDetailsScreen() {
   const jobId = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
   const { error, isLoading, job, refresh, setJob } = useDriverJob(jobId);
   const overview = useDriverOverview();
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [chosenVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,11 +31,7 @@ export default function DriverJobDetailsScreen() {
     [job, overview.vehicles],
   );
 
-  useEffect(() => {
-    if (!selectedVehicleId && capableVehicles[0]) {
-      setSelectedVehicleId(capableVehicles[0]._id);
-    }
-  }, [capableVehicles, selectedVehicleId]);
+  const selectedVehicleId = chosenVehicleId ?? capableVehicles[0]?._id ?? null;
 
   if (isLoading || error || !job || overview.isLoading) {
     return (

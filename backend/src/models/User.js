@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-export const USER_ROLES = ['farmer', 'buyer', 'driver', 'agricultureOfficer'];
+export const USER_ROLES = ['farmer', 'buyer', 'driver', 'agricultureOfficer', 'admin'];
 
 const userSchema = new mongoose.Schema(
   {

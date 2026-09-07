@@ -45,7 +45,7 @@ export async function register(request, response, next) {
       });
     }
 
-    if (!USER_ROLES.includes(role)) {
+    if (!USER_ROLES.includes(role) || role === 'admin') {
       return response.status(400).json({ message: 'Select a valid user role' });
     }
 

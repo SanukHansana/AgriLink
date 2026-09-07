@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,7 +18,21 @@ const specializations: { label: string; value: OfficerSpecialization }[] = [
 
 export default function OfficerProfileScreen() {
   const { logout, user } = useAuth(); const state = useOfficerOverview(); const [editing, setEditing] = useState(false); const [employeeId, setEmployeeId] = useState(''); const [phone, setPhone] = useState(''); const [center, setCenter] = useState(''); const [district, setDistrict] = useState(''); const [address, setAddress] = useState(''); const [division, setDivision] = useState(''); const [specialization, setSpecialization] = useState<OfficerSpecialization>('generalAgriculture'); const [error, setError] = useState<string | null>(null); const [busy, setBusy] = useState(false);
-  useEffect(() => { if (!state.profile) { setEditing(true); return; } setEmployeeId(state.profile.employeeId); setPhone(state.profile.phone); setCenter(state.profile.assignedCenter.name); setDistrict(state.profile.assignedCenter.district); setAddress(state.profile.assignedCenter.address ?? ''); setDivision(state.profile.division ?? ''); setSpecialization(state.profile.specialization); }, [state.profile]);
+  const [previousProfile, setPreviousProfile] = useState<typeof state.profile | undefined>(undefined);
+  if (previousProfile !== state.profile) {
+    setPreviousProfile(state.profile);
+    if (!state.profile) {
+      setEditing(true);
+    } else {
+      setEmployeeId(state.profile.employeeId);
+      setPhone(state.profile.phone);
+      setCenter(state.profile.assignedCenter.name);
+      setDistrict(state.profile.assignedCenter.district);
+      setAddress(state.profile.assignedCenter.address ?? '');
+      setDivision(state.profile.division ?? '');
+      setSpecialization(state.profile.specialization);
+    }
+  }
   if (state.isLoading && !state.profile) return <SafeAreaView style={styles.safeArea}><AdvisoryState isLoading /></SafeAreaView>;
   if (state.error && !state.profile) return <SafeAreaView style={styles.safeArea}><AdvisoryState error={state.error} onRetry={state.refresh} /></SafeAreaView>;
   const save = async () => { if (!employeeId.trim() || !phone.trim() || !center.trim() || !district.trim()) { setError('Employee ID, phone, center and district are required.'); return; } setBusy(true); setError(null); const input = { employeeId: employeeId.trim(), phone: phone.trim(), assignedCenter: { name: center.trim(), district: district.trim(), address: address.trim() || undefined }, specialization, division: division.trim() || undefined }; try { if (state.profile) await updateOfficerProfile(input); else await createOfficerProfile(input); setEditing(false); state.refresh(); } catch (requestError) { setError(getApiErrorMessage(requestError)); } finally { setBusy(false); } };

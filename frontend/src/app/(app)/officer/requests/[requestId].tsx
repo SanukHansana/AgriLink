@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,9 +19,11 @@ export default function OfficerRequestDetailsScreen() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
+  const [previousRequest, setPreviousRequest] = useState(state.request);
+  if (previousRequest !== state.request) {
+    setPreviousRequest(state.request);
     if (state.request) setInternalNotes(state.request.internalNotes ?? '');
-  }, [state.request]);
+  }
 
   if (state.isLoading || state.error || !state.request) {
     return <SafeAreaView style={styles.safeArea}><AdvisoryState error={state.error} isLoading={state.isLoading} onRetry={state.refresh} /></SafeAreaView>;

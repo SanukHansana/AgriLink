@@ -13,11 +13,7 @@ export function useAssistanceRequest(requestId?: string) {
   useEffect(() => {
     let isActive = true;
     if (!requestId) {
-      setError('Assistance request ID is missing.');
-      setIsLoading(false);
-      return () => {
-        isActive = false;
-      };
+      return;
     }
     getAssistanceRequest(requestId)
       .then((result) => {
@@ -42,5 +38,11 @@ export function useAssistanceRequest(requestId?: string) {
     setRefreshKey((value) => value + 1);
   }, []);
 
-  return { error, isLoading, refresh, request, setRequest };
+  return {
+    error: requestId ? error : 'Assistance request ID is missing.',
+    isLoading: Boolean(requestId) && isLoading,
+    refresh,
+    request: requestId ? request : null,
+    setRequest,
+  };
 }
