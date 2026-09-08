@@ -3,6 +3,20 @@ import { test } from 'node:test';
 import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
 import User from '../src/models/User.js';
+import { requireRole } from '../src/middleware/roleMiddleware.js';
+
+test('officer verification is required for officer-only and shared resources', () => {
+  for (const roles of [['agricultureOfficer'], ['farmer', 'agricultureOfficer']]) {
+    for (const isVerified of [undefined, false, true]) {
+      let allowed = false;
+      let status;
+      const response = { status(code) { status = code; return this; }, json() { return this; } };
+      requireRole(...roles)({ user: { role: 'agricultureOfficer', isVerified } }, response, () => { allowed = true; });
+      assert.equal(allowed, isVerified === true);
+      if (!allowed) assert.equal(status, 403);
+    }
+  }
+});
 
 test('admin API enforces authentication, roles and mutation validation', async () => {
   const originalFindById = User.findById;
@@ -21,6 +35,13 @@ test('admin API enforces authentication, roles and mutation validation', async (
     }
     User.findById = async () => ({ role: 'admin', isActive: false });
     assert.equal((await fetch(`${base}/admin/users`, { headers })).status, 401);
+    User.findById = async () => ({ role: 'admin', isActive: true });
+    assert.equal((await fetch(`${base}/admin/users/507f1f77bcf86cd799439011/verification`, { method: 'PATCH', headers, body: JSON.stringify({ isVerified: 'true' }) })).status, 400);
+    User.findById = async () => ({ role: 'agricultureOfficer', isActive: true, isVerified: false });
+    for (const path of ['officer-profile', 'requests', 'notices', 'quality-guidelines', 'surplus-advisories', 'reported-listings', 'reports/overview']) {
+      assert.equal((await fetch(`${base}/advisory/${path}`, { headers })).status, 403);
+    }
+    assert.equal((await fetch(`${base}/admin/users/507f1f77bcf86cd799439011/verification`, { method: 'PATCH', headers, body: JSON.stringify({ isVerified: true }) })).status, 403);
     User.findById = async () => ({ role: 'admin', isActive: true });
     assert.equal((await fetch(`${base}/admin/users/invalid`, { method: 'PATCH', headers, body: JSON.stringify({ isActive: false }) })).status, 400);
     assert.equal((await fetch(`${base}/admin/users/507f1f77bcf86cd799439011`, { method: 'PATCH', headers, body: JSON.stringify({ isActive: 'false' }) })).status, 400);
