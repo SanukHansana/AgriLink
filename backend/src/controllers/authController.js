@@ -31,6 +31,7 @@ function publicUser(user) {
     email: user.email,
     role: user.role,
     createdAt: user.createdAt,
+    isVerified: user.isVerified === true,
     updatedAt: user.updatedAt,
   };
 }

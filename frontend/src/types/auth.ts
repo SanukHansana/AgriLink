@@ -7,6 +7,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: UserRole;
+  isVerified: boolean;
   createdAt: string;
   updatedAt: string;
 };

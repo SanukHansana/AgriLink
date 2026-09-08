@@ -6,7 +6,7 @@ import { api, getApiErrorMessage } from '@/services/api';
 type Section = 'overview' | 'users' | 'products' | 'orders';
 type Overview = { users: number; activeUsers: number; listings: number; activeListings: number; orders: number; pendingOrders: number; deliveredValue: number };
 type Person = { name: string; email: string };
-type Row = { _id: string; name?: string; email?: string; role?: string; isActive?: boolean; status?: string; category?: string; farmer?: Person; buyer?: Person; seller?: Person; orderCode?: string; totalAmount?: number; createdAt: string };
+type Row = { _id: string; name?: string; email?: string; role?: string; isActive?: boolean; isVerified?: boolean; status?: string; category?: string; farmer?: Person; buyer?: Person; seller?: Person; orderCode?: string; totalAmount?: number; createdAt: string };
 type Collection = { items: Row[]; total: number; pages: number };
 const sections: { key: Section; label: string }[] = [{ key: 'overview', label: 'Overview' }, { key: 'users', label: 'Users' }, { key: 'products', label: 'Listings' }, { key: 'orders', label: 'Orders' }];
 const money = (value: number) => `LKR ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [verificationAction, setVerificationAction] = useState(false);
   const [confirmation, setConfirmation] = useState<Row | null>(null);
   const [revision, setRevision] = useState(0);
 
@@ -51,12 +52,12 @@ export default function AdminDashboard() {
     setError(null);
     setNotice(null);
     try {
-      await api.patch(`/admin/${section}/${row._id}`, section === 'users' ? { isActive: !row.isActive } : { status: row.status === 'active' ? 'inactive' : 'active' });
+      await api.patch(`/admin/${section}/${row._id}${verificationAction ? "/verification" : ""}`, verificationAction ? { isVerified: !row.isVerified } : section === 'users' ? { isActive: !row.isActive } : { status: row.status === 'active' ? 'inactive' : 'active' });
       setNotice('Changes saved successfully.');
       setRevision((value) => value + 1);
     } catch (cause) { setError(getApiErrorMessage(cause)); }
     finally { setBusy(null); setConfirmation(null); }
-  }, [section]);
+  }, [section, verificationAction]);
 
   return (
     <View style={[styles.shell, { flexDirection: desktop ? 'row' : 'column' }]}>
@@ -71,7 +72,7 @@ export default function AdminDashboard() {
         <View style={styles.header}><View><Text style={styles.eyebrow}>PLATFORM MANAGEMENT</Text><Text style={styles.title}>{sections.find((item) => item.key === section)?.label}</Text><Text style={styles.subtitle}>Manage your AgriLink community and marketplace.</Text></View><Button label="Refresh" disabled={loading || Boolean(busy)} onPress={() => setRevision((value) => value + 1)} /></View>
         {error && <View style={styles.error}><Text accessibilityRole="alert" style={styles.errorText}>{error}</Text><Button label="Try again" disabled={Boolean(busy)} onPress={() => setRevision((value) => value + 1)} /></View>}
         {notice && <Text accessibilityLiveRegion="polite" style={styles.notice}>{notice}</Text>}
-        {confirmation && <View style={styles.panel}><Text style={styles.panelTitle}>{section === 'users' ? `${confirmation.isActive ? 'Deactivate' : 'Activate'} ${confirmation.name}?` : `${confirmation.status === 'active' ? 'Hide' : 'Activate'} ${confirmation.name}?`}</Text><Text style={styles.subtitle}>{section === 'users' ? 'Inactive users cannot log in or access the API.' : 'Inactive listings are hidden from the marketplace.'}</Text><View style={styles.actions}><Button label={busy ? 'Saving…' : 'Confirm change'} disabled={Boolean(busy)} onPress={() => void update(confirmation)} /><Button label="Cancel" disabled={Boolean(busy)} onPress={() => setConfirmation(null)} /></View></View>}
+        {confirmation && <View style={styles.panel}><Text style={styles.panelTitle}>{verificationAction ? `${confirmation.isVerified ? 'Revoke verification for' : 'Verify'} ${confirmation.name}?` : section === 'users' ? `${confirmation.isActive ? 'Deactivate' : 'Activate'} ${confirmation.name}?` : `${confirmation.status === 'active' ? 'Hide' : 'Activate'} ${confirmation.name}?`}</Text><Text style={styles.subtitle}>{verificationAction ? 'Only verified agriculture officers can access officer features.' : section === 'users' ? 'Inactive users cannot log in or access the API.' : 'Inactive listings are hidden from the marketplace.'}</Text><View style={styles.actions}><Button label={busy ? 'Saving…' : 'Confirm change'} disabled={Boolean(busy)} onPress={() => void update(confirmation)} /><Button label="Cancel" disabled={Boolean(busy)} onPress={() => setConfirmation(null)} /></View></View>}
         {loading ? <ActivityIndicator size="large" color="#216b43" style={{ margin: 40 }} /> : section === 'overview' && overview ? <>
           <View style={styles.cards}>
             {[['Registered users', overview.users, `${overview.activeUsers} active accounts`], ['Marketplace listings', overview.listings, `${overview.activeListings} active listings`], ['Total orders', overview.orders, `${overview.pendingOrders} awaiting confirmation`], ['Delivered order value', money(overview.deliveredValue), 'Completed orders only']].map(([label, value, detail]) => <View key={label} style={styles.card}><Text style={styles.subtitle}>{label}</Text><Text style={styles.metric}>{value}</Text><Text style={styles.detail}>{detail}</Text></View>)}
@@ -83,9 +84,9 @@ export default function AdminDashboard() {
             <View style={[styles.row, styles.tableHeader]}>{(section === 'users' ? ['Name / email', 'Role', 'Status', 'Action'] : section === 'products' ? ['Listing / farmer', 'Category', 'Status', 'Action'] : ['Order / buyer', 'Seller', 'Status', 'Amount']).map((label) => <Text key={label} style={[styles.cell, styles.columnHeading]}>{label}</Text>)}</View>
             {collection.items.map((row) => <View key={row._id} style={styles.row}>
               <View style={styles.cell}><Text style={styles.rowTitle}>{row.name ?? row.orderCode}</Text><Text style={styles.detail}>{row.email ?? row.farmer?.name ?? row.buyer?.name ?? 'Unavailable'}</Text></View>
-              <Text style={styles.cell}>{roleLabel(row.role) ?? row.category ?? row.seller?.name ?? 'Unavailable'}</Text>
+              <Text style={styles.cell}>{roleLabel(row.role) ?? row.category ?? row.seller?.name ?? 'Unavailable'}{row.role === 'agricultureOfficer' ? ` · ${row.isVerified ? 'Verified' : 'Unverified'}` : ''}</Text>
               <Text style={[styles.cell, styles.status]}>{section === 'users' ? row.isActive ? 'Active' : 'Inactive' : row.status}</Text>
-              <View style={styles.cell}>{section === 'orders' ? <Text>{money(row.totalAmount ?? 0)}</Text> : row.role === 'admin' ? <Text style={styles.detail}>Protected admin</Text> : row.status === 'sold' ? <Text style={styles.detail}>Sold</Text> : <Button disabled={Boolean(busy) || Boolean(confirmation)} label={section === 'users' ? row.isActive ? 'Deactivate' : 'Activate' : row.status === 'active' ? 'Hide listing' : 'Activate'} onPress={() => setConfirmation(row)} />}</View>
+              <View style={styles.cell}>{section === 'orders' ? <Text>{money(row.totalAmount ?? 0)}</Text> : row.role === 'admin' ? <Text style={styles.detail}>Protected admin</Text> : row.status === 'sold' ? <Text style={styles.detail}>Sold</Text> : <Button disabled={Boolean(busy) || Boolean(confirmation)} label={section === 'users' ? row.isActive ? 'Deactivate' : 'Activate' : row.status === 'active' ? 'Hide listing' : 'Activate'} onPress={() => { setVerificationAction(false); setConfirmation(row); }} />}{row.role === 'agricultureOfficer' && <Button disabled={Boolean(busy) || Boolean(confirmation)} label={row.isVerified ? 'Revoke verification' : 'Verify officer'} onPress={() => { setVerificationAction(true); setConfirmation(row); }} />}</View>
             </View>)}
             {!collection.items.length && <Text style={styles.empty}>No {section === 'products' ? 'listings' : section} yet.</Text>}
           </View></ScrollView>
