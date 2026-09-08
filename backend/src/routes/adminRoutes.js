@@ -21,7 +21,7 @@ router.get('/overview', async (_request, response) => {
 
 // Paginated collections never expose password hashes or full order addresses.
 for (const [path, model, fields, populate] of [
-  ['users', User, 'name email role isActive createdAt', null],
+  ['users', User, 'name email role isActive isVerified verifiedAt createdAt', null],
   ['products', Product, 'name category status farmer createdAt', 'farmer'],
   ['orders', Order, 'orderCode status totalAmount buyer seller createdAt', 'buyer seller'],
 ]) {
@@ -33,6 +33,21 @@ for (const [path, model, fields, populate] of [
     response.json({ items, total, page, pages: Math.max(1, Math.ceil(total / 25)) });
   });
 }
+
+router.patch('/users/:id/verification', async (request, response) => {
+  if (!mongoose.isValidObjectId(request.params.id) || typeof request.body.isVerified !== 'boolean') {
+    return response.status(400).json({ message: 'Provide a valid officer ID and verification status' });
+  }
+  const update = request.body.isVerified
+    ? { $set: { isVerified: true, verifiedBy: request.user._id, verifiedAt: new Date() } }
+    : { $set: { isVerified: false }, $unset: { verifiedBy: '', verifiedAt: '' } };
+  const user = await User.findOneAndUpdate(
+    { _id: request.params.id, role: 'agricultureOfficer' }, update,
+    { returnDocument: 'after', runValidators: true },
+  ).select('name email role isActive isVerified verifiedAt createdAt');
+  if (!user) return response.status(404).json({ message: 'Agriculture officer not found' });
+  return response.json({ user });
+});
 
 router.patch('/users/:id', async (request, response) => {
   if (!mongoose.isValidObjectId(request.params.id) || typeof request.body.isActive !== 'boolean') {

@@ -6,6 +6,9 @@ export function requireRole(...allowedRoles) {
       });
     }
 
+    if (request.user.role === 'agricultureOfficer' && request.user.isVerified !== true) {
+      return response.status(403).json({ message: 'Your agriculture officer account is awaiting administrator verification' });
+    }
     return next();
   };
 }

@@ -8,7 +8,7 @@ import {
 } from 'react';
 
 import { loginUser, registerUser } from '@/services/auth-service';
-import { setApiToken } from '@/services/api';
+import { api, setApiToken } from '@/services/api';
 import type { AuthUser, LoginInput, RegisterInput } from '@/types/auth';
 
 type AuthContextValue = {
@@ -18,6 +18,7 @@ type AuthContextValue = {
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -62,6 +63,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const response = await api.get<{ user: AuthUser }>('/auth/me');
+    setUser(response.data.user);
+  }, []);
+
   const value = useMemo(
     () => ({
       isAuthenticated: Boolean(user),
@@ -70,8 +76,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       login,
       register,
       logout,
+      refreshUser,
     }),
-    [isLoading, login, logout, register, user],
+    [isLoading, login, logout, refreshUser, register, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
