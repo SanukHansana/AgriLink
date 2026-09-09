@@ -11,6 +11,7 @@ export function FormField({ label, style, ...inputProps }: FormFieldProps) {
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        accessibilityLabel={label}
         autoCapitalize="none"
         placeholderTextColor="#A0A3A1"
         style={[styles.input, style]}
