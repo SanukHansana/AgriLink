@@ -86,6 +86,8 @@ export default function RegisterScreen() {
         onChangeText={setPassword}
         placeholder="At least 8 characters"
         secureTextEntry
+        onSubmitEditing={handleRegister}
+        returnKeyType="go"
         value={password}
       />
 
