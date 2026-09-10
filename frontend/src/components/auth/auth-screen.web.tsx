@@ -48,9 +48,9 @@ export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProp
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#f3f6f3' },
-  pageContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  shell: { width: '100%', maxWidth: 1200, alignSelf: 'center', backgroundColor: '#fff', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#dfe8e1' },
-  desktopShell: { flexDirection: 'row', minHeight: 760 },
+  pageContent: { flexGrow: 1 },
+  shell: { flexGrow: 1, width: '100%', backgroundColor: '#fff' },
+  desktopShell: { flexDirection: 'row' },
   brandPanel: { backgroundColor: '#153d2b', padding: 32 },
   desktopBrand: { width: '44%', padding: 48, justifyContent: 'space-between' },
   compactBrand: { paddingVertical: 22 },
