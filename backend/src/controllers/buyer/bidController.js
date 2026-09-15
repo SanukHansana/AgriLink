@@ -1,10 +1,12 @@
 import Bid, { BID_STATUSES } from '../../models/Bid.js';
 import Product from '../../models/Product.js';
 import { isPositiveNumber, isValidMongoId } from '../../utils/validation.js';
+import { parseValidDate } from '../../utils/validation.js';
+import { validateBid, validAddress, expireBids } from '../../services/bidding.js';
 
 export async function createBid(request, response, next) {
   try {
-    const { productId, bidAmount, quantity } = request.body;
+    const { productId, bidAmount, quantity, deliveryAddress, requestedDeliveryDate } = request.body;
 
     if (!isValidMongoId(productId)) {
       return response.status(400).json({ message: 'Enter a valid product ID' });
@@ -28,12 +30,20 @@ export async function createBid(request, response, next) {
       return response.status(400).json({ message: 'Bidding is not available for this product' });
     }
 
+    validateBid(product, bidAmount, quantity);
+    if (!validAddress(deliveryAddress)) return response.status(400).json({ message: 'Delivery address, city and district are required' });
+    const deliveryDate = parseValidDate(requestedDeliveryDate);
+    if ((requestedDeliveryDate && !deliveryDate) || (product.listingType === 'future' && (!deliveryDate || deliveryDate < new Date(product.harvestDate)))) {
+      return response.status(400).json({ message: 'For future harvests, select a delivery date on or after the harvest date' });
+    }
     const bid = await Bid.create({
       buyer: request.user._id,
       product: productId,
       bidAmount,
       quantity,
       unit: product.unit,
+      deliveryAddress,
+      requestedDeliveryDate: deliveryDate,
     });
 
     return response.status(201).json({
@@ -49,6 +59,7 @@ export async function getBuyerBids(request, response, next) {
   try {
     const { status } = request.query;
     const filter = { buyer: request.user._id };
+    await expireBids(filter);
 
     if (status) {
       if (!BID_STATUSES.includes(status)) {
@@ -79,6 +90,7 @@ export async function getBuyerBid(request, response, next) {
       return response.status(400).json({ message: 'Enter a valid bid ID' });
     }
 
+    await expireBids({ _id: bidId, buyer: request.user._id });
     const bid = await Bid.findOne({
       _id: bidId,
       buyer: request.user._id,

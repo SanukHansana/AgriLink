@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 
 import { PRODUCT_UNITS } from './Bid.js';
 
-export const ORDER_TYPES = ['fixedPrice', 'advance'];
+export const ORDER_TYPES = ['fixedPrice', 'advance', 'bid'];
 export const ORDER_STATUSES = [
   'pending',
   'confirmed',
@@ -58,6 +58,8 @@ const orderSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    bid: { type: mongoose.Schema.Types.ObjectId, ref: 'Bid' },
+    stockReserved: { type: Boolean, default: false },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -130,6 +132,7 @@ orderSchema.pre('validate', function calculateTotal() {
 });
 
 orderSchema.index({ buyer: 1, status: 1, createdAt: -1 });
+orderSchema.index({ bid: 1 }, { unique: true, partialFilterExpression: { bid: { $type: 'objectId' } } });
 orderSchema.index({ seller: 1, status: 1, createdAt: -1 });
 
 const Order = mongoose.model('Order', orderSchema);

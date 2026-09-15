@@ -24,6 +24,7 @@ export type BuyerBid = {
   unit: ProductUnit;
   totalAmount: number;
   status: BidStatus;
+  order?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -62,7 +63,7 @@ export type BuyerOrder = {
   buyer: string | { _id: string; name: string; email?: string };
   seller: string | { _id: string; name: string };
   product: string | OrderProductSummary;
-  orderType: 'fixedPrice' | 'advance';
+  orderType: 'fixedPrice' | 'advance' | 'bid';
   quantity: number;
   unit: ProductUnit;
   pricePerUnit: number;
