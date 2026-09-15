@@ -167,7 +167,7 @@ function OrderCard({ order }: { order: BuyerOrder }) {
       </Text>
       <Text style={styles.orderMeta}>
         Qty: {order.quantity.toLocaleString('en-LK')} {order.unit} •{' '}
-        {order.orderType === 'advance' ? 'Advance order' : 'Direct purchase'}
+        {order.orderType === 'advance' ? 'Advance order' : order.orderType === 'bid' ? 'Accepted bid' : 'Direct purchase'}
       </Text>
       <Text style={styles.total}>Total: {formatLkr(order.totalAmount)}</Text>
 

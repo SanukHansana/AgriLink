@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
 import { ProductImage } from '@/components/buyer/product-image';
 import { PrimaryButton } from '@/components/auth/primary-button';
+import { FormField } from '@/components/auth/form-field';
 import { BrandColors } from '@/constants/theme';
 import { useMarketplaceProduct } from '@/hooks/use-marketplace-product';
 import { getApiErrorMessage } from '@/services/api';
@@ -28,6 +29,10 @@ export default function PlaceBidScreen() {
   const { error: productError, isLoading, product, refresh } = useMarketplaceProduct(productId);
   const [bidAmount, setBidAmount] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [addressLine, setAddressLine] = useState('');
+  const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,6 +58,22 @@ export default function PlaceBidScreen() {
       setSubmitError('Enter a positive bid price and quantity.');
       return;
     }
+    if (product.pricingMode === 'fixedPrice' || !product.biddingClosesAt || new Date(product.biddingClosesAt) <= new Date()) {
+      setSubmitError('Bidding is not open for this listing.'); return;
+    }
+    if (numericBid < (product.minimumBidPrice ?? 0)) {
+      setSubmitError(`Bid price must be at least ${formatLkr(product.minimumBidPrice ?? 0)} per ${product.unit}.`); return;
+    }
+    if (numericQuantity < product.minimumOrderQuantity || numericQuantity > product.availableQuantity) {
+      setSubmitError('Enter a quantity within the minimum order and available stock.'); return;
+    }
+    if (!addressLine.trim() || !city.trim() || !district.trim()) {
+      setSubmitError('Enter your delivery address, city and district.'); return;
+    }
+    const requestedDate = deliveryDate ? new Date(deliveryDate) : null;
+    if (product.listingType === 'future' && (!/^\d{4}-\d{2}-\d{2}$/.test(deliveryDate) || !requestedDate || Number.isNaN(requestedDate.getTime()) || (product.harvestDate && requestedDate < new Date(product.harvestDate)))) {
+      setSubmitError('Enter a delivery date on or after the harvest date (YYYY-MM-DD).'); return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -60,8 +81,10 @@ export default function PlaceBidScreen() {
         productId,
         bidAmount: numericBid,
         quantity: numericQuantity,
+        deliveryAddress: { addressLine: addressLine.trim(), city: city.trim(), district: district.trim() },
+        requestedDeliveryDate: product.listingType === 'future' ? requestedDate?.toISOString() : undefined,
       });
-      router.replace('/(app)/buyer/orders');
+      router.replace('/(app)/buyer/bids');
     } catch (requestError) {
       setSubmitError(getApiErrorMessage(requestError));
     } finally {
@@ -132,14 +155,22 @@ export default function PlaceBidScreen() {
             {product.minimumOrderQuantity} {product.unit}
           </Text>
 
+          <View style={{ gap: 14, marginTop: 20 }}>
+            <Text style={styles.inputHint}>Bidding closes: {product.biddingClosesAt ? new Date(product.biddingClosesAt).toLocaleString() : 'Not available'}</Text>
+            <FormField label="Delivery address" value={addressLine} onChangeText={setAddressLine} maxLength={180} placeholder="Street address" />
+            <FormField label="City" value={city} onChangeText={setCity} maxLength={80} placeholder="Delivery city" />
+            <FormField label="District" value={district} onChangeText={setDistrict} maxLength={80} placeholder="Delivery district" />
+            {product.listingType === 'future' && <FormField label="Requested delivery date (YYYY-MM-DD)" value={deliveryDate} onChangeText={setDeliveryDate} placeholder="YYYY-MM-DD" maxLength={10} />}
+          </View>
+
           <View style={styles.totalCard}>
             <Text style={styles.totalLabel}>Estimated bid value</Text>
             <Text style={styles.totalValue}>{formatLkr(Math.max(0, estimatedTotal))}</Text>
           </View>
 
           <Text style={styles.notice}>
-            Your bid will be saved with an active status for the farmer to review. No payment is
-            collected during this evaluation.
+            If the farmer accepts your bid before bidding closes, a confirmed order is created at
+            your bid price with this delivery address. Stock is reserved on acceptance. No payment is collected here.
           </Text>
 
           {submitError ? <Text style={styles.error}>{submitError}</Text> : null}

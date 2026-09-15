@@ -1,3 +1,6 @@
+import mongoose from 'mongoose';
+import Product from '../../models/Product.js';
+import { fail } from '../../services/bidding.js';
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
 import { isValidMongoId } from '../../utils/validation.js';
 
@@ -50,22 +53,24 @@ export async function updateFarmerOrderStatus(request, response, next) {
     if (!FARMER_ORDER_UPDATES.includes(status)) {
       return response.status(400).json({ message: 'Enter a valid farmer order status' });
     }
-    const order = await populateOrder(
-      Order.findOneAndUpdate(
-        {
-          _id: orderId,
-          seller: request.user._id,
-          status: { $nin: ['inTransit', 'delivered', 'cancelled'] },
-        },
-        { $set: { status } },
-        { new: true, runValidators: true },
-      ),
-    );
-    if (!order) {
-      return response.status(404).json({
-        message: 'Editable order not found or delivery has already started',
-      });
-    }
+    await mongoose.connection.transaction(async (session) => {
+      const order = await Order.findOne({
+        _id: orderId, seller: request.user._id,
+        status: { $nin: ['inTransit', 'delivered', 'cancelled'] },
+      }).session(session);
+      if (!order) fail('Editable order not found or delivery has already started', 404);
+      if (status === 'cancelled' && order.stockReserved) {
+        const product = await Product.findById(order.product).session(session);
+        if (!product) fail('Cannot restore stock because the product no longer exists', 409);
+        product.availableQuantity += order.quantity;
+        if (product.status === 'sold') product.status = 'active';
+        await product.save({ session });
+        order.stockReserved = false;
+      }
+      order.status = status;
+      await order.save({ session });
+    });
+    const order = await populateOrder(Order.findById(orderId));
     return response.status(200).json({
       message: 'Order status updated successfully',
       order,

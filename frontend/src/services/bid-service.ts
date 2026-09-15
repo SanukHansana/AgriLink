@@ -1,10 +1,12 @@
 import { api } from '@/services/api';
-import type { BidStatus, BuyerBid } from '@/types/transactions';
+import type { BidStatus, BuyerBid, DeliveryAddressInput } from '@/types/transactions';
 
 type CreateBidInput = {
   productId: string;
   bidAmount: number;
   quantity: number;
+  deliveryAddress: DeliveryAddressInput;
+  requestedDeliveryDate?: string;
 };
 
 export async function createBuyerBid(input: CreateBidInput) {
