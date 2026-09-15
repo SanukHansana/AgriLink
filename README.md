@@ -55,3 +55,20 @@ browser. Sign in with the administrator credentials. Ensure `EXPO_PUBLIC_API_URL
 points to the running backend (for local desktop use, `http://localhost:5001/api`).
 
 Run backend access-control checks with `cd backend` followed by `npm test`.
+## Bidding and stock
+
+Buyers submit a price per unit, quantity and delivery address. Future-harvest bids
+also require a delivery date on or after harvest. The API enforces minimum price,
+minimum quantity, remaining stock and the bidding deadline. Farmers must accept
+before the deadline; expired offers are marked expired when bid lists are refreshed.
+
+Accepting a bid creates a confirmed order at the bid price, links the bid to that
+order and reserves stock in one MongoDB transaction. Repeated acceptance cannot
+create another order. Direct and advance purchases reserve the same inventory.
+Cancelling a new reserved order restores stock once. Old orders without a stock
+reservation are not restocked. Old bids without delivery addresses must be
+resubmitted before they can be accepted.
+
+**Database requirement:** use MongoDB Atlas or a MongoDB replica set. Standalone
+MongoDB servers do not support the multi-document transactions used here. No
+unsafe nontransactional fallback is used. No payment is collected by accepting a bid.

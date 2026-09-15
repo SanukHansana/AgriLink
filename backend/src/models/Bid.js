@@ -43,6 +43,14 @@ const bidSchema = new mongoose.Schema(
       default: 'active',
       index: true,
     },
+    deliveryAddress: {
+      addressLine: { type: String, trim: true, maxlength: 180 },
+      city: { type: String, trim: true, maxlength: 80 },
+      district: { type: String, trim: true, maxlength: 80 },
+      postalCode: { type: String, trim: true, maxlength: 10 },
+    },
+    requestedDeliveryDate: Date,
+    order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   },
   {
     timestamps: true,

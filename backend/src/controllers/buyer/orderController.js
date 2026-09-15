@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+import { fail, reserveStock, validAddress } from '../../services/bidding.js';
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
 import Product from '../../models/Product.js';
 import {
@@ -6,23 +8,12 @@ import {
   parseValidDate,
 } from '../../utils/validation.js';
 
-function validateDeliveryAddress(address) {
-  return Boolean(
-    address &&
-      typeof address === 'object' &&
-      address.addressLine?.trim() &&
-      address.city?.trim() &&
-      address.district?.trim(),
-  );
-}
-
 function createBuyerOrder(orderType) {
   return async (request, response, next) => {
     try {
       const {
         productId,
         quantity,
-        pricePerUnit,
         deliveryAddress,
         requestedDeliveryDate,
         notes,
@@ -36,7 +27,7 @@ function createBuyerOrder(orderType) {
         return response.status(400).json({ message: 'Quantity must be a positive number' });
       }
 
-      if (!validateDeliveryAddress(deliveryAddress)) {
+      if (!validAddress(deliveryAddress)) {
         return response.status(400).json({
           message: 'Delivery address, city and district are required',
         });
@@ -53,52 +44,25 @@ function createBuyerOrder(orderType) {
         });
       }
 
-      const product = await Product.findOne({ _id: productId, status: 'active' });
-
-      if (!product) {
-        return response.status(404).json({ message: 'Product not found or no longer available' });
-      }
-
-      if (orderType === 'fixedPrice' && product.pricingMode === 'bidding') {
-        return response.status(400).json({
-          message: 'Fixed-price ordering is not available for this product',
-        });
-      }
-
-      if (orderType === 'advance' && product.listingType !== 'future') {
-        return response.status(400).json({
-          message: 'Advance orders can only be created for future harvests',
-        });
-      }
-
-      if (
-        orderType === 'advance' &&
-        product.harvestDate &&
-        deliveryDate < new Date(product.harvestDate)
-      ) {
-        return response.status(400).json({
-          message: 'Requested delivery date cannot be before the expected harvest date',
-        });
-      }
-
-      const effectivePrice = product.fixedPrice ?? pricePerUnit;
-      if (!isPositiveNumber(effectivePrice)) {
-        return response.status(400).json({
-          message: 'A positive price is required for this order',
-        });
-      }
-
-      const order = await Order.create({
-        buyer: request.user._id,
-        seller: product.farmer,
-        product: productId,
-        orderType,
-        quantity,
-        unit: product.unit,
-        pricePerUnit: effectivePrice,
-        deliveryAddress,
-        requestedDeliveryDate: deliveryDate,
-        notes,
+      const order = await mongoose.connection.transaction(async (session) => {
+        const product = await Product.findOne({ _id: productId, status: 'active' }).session(session);
+        if (!product) fail('Product not found or no longer available', 404);
+        if (product.pricingMode === 'bidding') fail('Use the bidding flow for this product');
+        if (orderType === 'advance' && product.listingType !== 'future') fail('Advance orders can only be created for future harvests');
+        if (orderType === 'fixedPrice' && product.listingType === 'future') fail('Use an advance order for future harvests');
+        if (orderType === 'advance' && product.harvestDate && deliveryDate < new Date(product.harvestDate)) fail('Requested delivery date cannot be before the expected harvest date');
+        if (quantity < product.minimumOrderQuantity) fail(`Quantity must be at least ${product.minimumOrderQuantity} ${product.unit}`);
+        if (quantity > product.availableQuantity) fail('Requested quantity exceeds the available stock', 409);
+        // The listing determines the price; clients cannot supply a lower price.
+        const effectivePrice = product.fixedPrice;
+        if (!isPositiveNumber(effectivePrice)) fail('This listing does not have a valid fixed price');
+        await reserveStock(product, quantity, session);
+        const [created] = await Order.create([{
+          buyer: request.user._id, seller: product.farmer, product: productId,
+          orderType, quantity, unit: product.unit, pricePerUnit: effectivePrice,
+          deliveryAddress, requestedDeliveryDate: deliveryDate, notes, stockReserved: true,
+        }], { session });
+        return created;
       });
 
       return response.status(201).json({

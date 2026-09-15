@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,7 +34,7 @@ export default function BuyerBidsScreen() {
         <View style={styles.headingRow}>
           <Text style={styles.title}>My Bids</Text>
           <View style={styles.infoBadge}>
-            <Text style={styles.infoBadgeText}>MongoDB saved bids</Text>
+            <Text style={styles.infoBadgeText}>Your offers</Text>
           </View>
         </View>
 
@@ -72,6 +73,7 @@ export default function BuyerBidsScreen() {
 }
 
 function BidCard({ bid }: { bid: BuyerBid }) {
+  const router = useRouter();
   const productName = typeof bid.product === 'string' ? 'Product bid' : bid.product.name;
 
   return (
@@ -100,6 +102,7 @@ function BidCard({ bid }: { bid: BuyerBid }) {
           </Text>
         </View>
       </View>
+      {bid.order && <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/(app)/buyer/tracking/[orderId]', params: { orderId: bid.order! } })} style={{ marginTop: 16 }}><Text style={{ color: BrandColors.primary, fontWeight: '700' }}>View order →</Text></Pressable>}
     </View>
   );
 }
