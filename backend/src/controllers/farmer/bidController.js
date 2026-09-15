@@ -1,6 +1,7 @@
 import Bid, { BID_STATUSES } from '../../models/Bid.js';
 import Product from '../../models/Product.js';
 import { isValidMongoId } from '../../utils/validation.js';
+import { acceptBid, expireBids } from '../../services/bidding.js';
 
 async function farmerProductIds(farmerId) {
   return Product.find({ farmer: farmerId }).distinct('_id');
@@ -24,6 +25,7 @@ export async function getFarmerBids(request, response, next) {
 
     const productIds = await farmerProductIds(request.user._id);
     const filter = { product: { $in: productIds } };
+    await expireBids(filter);
     if (productId) {
       if (!productIds.some((id) => String(id) === productId)) {
         return response.status(404).json({ message: 'Farmer product not found' });
@@ -50,6 +52,11 @@ export async function updateFarmerBidStatus(request, response, next) {
       return response.status(400).json({ message: 'Bid status must be accepted or rejected' });
     }
 
+    if (status === 'accepted') {
+      const result = await acceptBid(bidId, request.user._id);
+      const bid = await populateBid(Bid.findById(result.bidId));
+      return response.status(200).json({ message: 'Bid accepted and order created successfully', bid, order: result.order });
+    }
     const productIds = await farmerProductIds(request.user._id);
     const bid = await populateBid(
       Bid.findOneAndUpdate(
