@@ -111,6 +111,10 @@ const productSchema = new mongoose.Schema(
         return this.listingType === 'future';
       },
     },
+    harvestStatus: { type: String, enum: ['growing', 'ready', 'delayed'], default: 'growing' },
+    harvestDelayNote: { type: String, trim: true, maxlength: 500 },
+    autoAcceptHighestBid: { type: Boolean, default: false },
+    auctionProcessedAt: Date,
     pricingMode: {
       type: String,
       enum: PRICING_MODES,

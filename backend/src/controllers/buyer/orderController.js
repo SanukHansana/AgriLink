@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import { fail, reserveStock, validAddress } from '../../services/bidding.js';
+import { notify } from '../../services/notifications.js';
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
 import Product from '../../models/Product.js';
+import DeliveryJob from '../../models/DeliveryJob.js';
 import {
   isPositiveNumber,
   isValidMongoId,
@@ -65,6 +67,7 @@ function createBuyerOrder(orderType) {
         return created;
       });
 
+      await notify(order.seller, `New order ${order.orderCode} is awaiting confirmation.`, `order-created:${order._id}`);
       return response.status(201).json({
         message:
           orderType === 'advance'
@@ -80,6 +83,24 @@ function createBuyerOrder(orderType) {
 
 export const createFixedPriceOrder = createBuyerOrder('fixedPrice');
 export const createAdvanceOrder = createBuyerOrder('advance');
+
+export async function updateRequestedDeliveryDate(request, response, next) {
+  try {
+    const date = parseValidDate(request.body.requestedDeliveryDate);
+    if (!isValidMongoId(request.params.orderId) || !date || date <= new Date()) fail('Enter a valid future delivery date');
+    const order = await mongoose.connection.transaction(async (session) => {
+      const order = await Order.findOne({ _id: request.params.orderId, buyer: request.user._id, status: { $in: ['pending', 'confirmed', 'preparing'] } }).session(session);
+      if (!order) fail('Editable order not found', 409);
+      if (order.deliveryJob || await DeliveryJob.exists({ orders: order._id, status: { $ne: 'cancelled' } }).session(session)) fail('Delivery is already scheduled. Contact the farmer.', 409);
+      const product = await Product.findById(order.product).session(session);
+      if (!product || (product.listingType === 'future' && date < product.harvestDate)) fail('Delivery must be on or after the revised harvest date');
+      order.requestedDeliveryDate = date;
+      await order.save({ session }); return order;
+    });
+    await notify(order.seller, `Buyer updated delivery for ${order.orderCode} to ${date.toISOString().slice(0, 10)}.`, `delivery-date:${order._id}:${order.updatedAt.toISOString()}`);
+    return response.json({ order });
+  } catch (error) { return next(error); }
+}
 
 export async function getBuyerOrders(request, response, next) {
   try {

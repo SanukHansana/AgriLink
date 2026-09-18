@@ -151,10 +151,10 @@ export default function DriverJobDetailsScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionLabel}>DESTINATION</Text>
+        <Text style={styles.sectionLabel}>DESTINATIONS</Text>
         <View style={styles.destinationCard}>
           <Text style={styles.contactName}>{job.destination.contactName}</Text>
-          <Text style={styles.address}>{job.destination.addressLine}, {job.destination.city}, {job.destination.district}</Text>
+          {(job.dropoffPoints?.length ? job.dropoffPoints : [job.destination]).map((point, index) => <Text key={index} style={styles.address}>{index + 1}. {point.contactName}: {point.addressLine}, {point.city}, {point.district}</Text>)}
           {job.destination.phone ? <Text style={styles.phone}>{job.destination.phone}</Text> : null}
         </View>
 

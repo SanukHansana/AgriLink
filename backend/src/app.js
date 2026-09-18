@@ -9,6 +9,7 @@ import driverRoutes from './routes/driverRoutes.js';
 import farmerRoutes from './routes/farmerRoutes.js';
 import logisticsRoutes from './routes/logisticsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.get('/api/health', (_request, response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/advisory', advisoryRoutes);
 app.use('/api/buyers', buyerRoutes);
 app.use('/api/drivers', driverRoutes);

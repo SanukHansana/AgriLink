@@ -1,6 +1,6 @@
 import type { ProductUnit } from '@/types/marketplace';
 
-export type BidStatus = 'active' | 'accepted' | 'rejected' | 'expired';
+export type BidStatus = 'active' | 'countered' | 'withdrawn' | 'accepted' | 'rejected' | 'expired';
 
 export type BidProductSummary = {
   _id: string;
@@ -25,11 +25,14 @@ export type BuyerBid = {
   totalAmount: number;
   status: BidStatus;
   order?: string;
+  counterAmount?: number;
   createdAt: string;
   updatedAt: string;
 };
 
 export type DeliveryAddressInput = {
+  latitude?: number;
+  longitude?: number;
   addressLine: string;
   city: string;
   district: string;
@@ -58,6 +61,7 @@ export type OrderProductSummary = {
 };
 
 export type BuyerOrder = {
+  deliveryJob?: string;
   _id: string;
   orderCode: string;
   buyer: string | { _id: string; name: string; email?: string };
