@@ -60,7 +60,7 @@ Run backend access-control checks with `cd backend` followed by `npm test`.
 Buyers submit a price per unit, quantity and delivery address. Future-harvest bids
 also require a delivery date on or after harvest. The API enforces minimum price,
 minimum quantity, remaining stock and the bidding deadline. Farmers must accept
-before the deadline; expired offers are marked expired when bid lists are refreshed.
+before the deadline for manual acceptance; expired offers are marked expired when bid lists are refreshed.
 
 Accepting a bid creates a confirmed order at the bid price, links the bid to that
 order and reserves stock in one MongoDB transaction. Repeated acceptance cannot
@@ -72,3 +72,45 @@ resubmitted before they can be accepted.
 **Database requirement:** use MongoDB Atlas or a MongoDB replica set. Standalone
 MongoDB servers do not support the multi-document transactions used here. No
 unsafe nontransactional fallback is used. No payment is collected by accepting a bid.
+
+### Farmer, buyer and driver workflow updates
+
+- **Harvest readiness and delays:** open Farmer → Future Harvests to mark a harvest
+  ready or report a revised date and reason. Existing order buyers receive an in-app
+  notification. Cancel unassigned pickup jobs before delaying a scheduled harvest.
+  Buyers can change the requested delivery date from Order Tracking before pickup
+  is booked, to agree a date after the revised harvest date.
+- **Pickup and shared delivery:** from the farmer home, open Pickup & Delivery.
+  Select preparing/dispatched orders, choose the farm address or a different pickup
+  address, and provide weight, payout and time. Multiple orders become one shared
+  job with drop-offs grouped by buyer and address. The API claims orders in a
+  transaction, rejects duplicate/legacy bookings and requires future harvests to be
+  ready. Pickup must be in the future, after harvest and by the requested delivery
+  day. Unassigned jobs can be cancelled to release their order claims.
+- **Bid negotiation:** buyers can edit or withdraw active offers; farmers can send
+  counter-offers. Only the bid owner can accept a counter-offer, which creates an
+  order at the counter price. Open Farmer → Bids & Auctions to optionally enable
+  automatic highest-bid acceptance on an open listing. The backend worker runs
+  every 30 seconds and on startup; it accepts one valid active bid at closing,
+  ranked by price per unit, then earliest creation time. Bids exceeding stock or
+  missing delivery details are skipped. Remaining bids expire. Automatic selection
+  is disabled by default and requires the backend process to stay running.
+- **Notifications:** use the Notifications button to see new orders/bids,
+  counter-offers, bid acceptance/rejection, harvest changes and driver assignment.
+  These are in-app notifications, polled every 15 seconds, not email/SMS or OS push.
+- **Map pins and location sharing:** buyer delivery forms and farmer pickup forms
+  accept optional latitude/longitude pairs or the device's current location. Drivers
+  can open each pickup/drop-off in Google Maps and confirm individual stops. Every
+  pickup must be confirmed before transit and every drop-off before trip completion.
+  Drivers may opt in to Share live location on Active Delivery; it stops when leaving
+  the screen/app, and only the related farmer/buyers can view it. Only the latest
+  position is stored; readings older than two minutes are hidden. Tracking polls
+  every 15 seconds. This is foreground sharing, not background GPS tracking.
+
+Restart the backend and Expo after updating. Custom native builds need rebuilding
+for the new `expo-location` module; browser location permission requires localhost
+or HTTPS. Addresses still work when location permission is denied.
+
+Validation: `npm test` in backend, `npm run lint` and `npx tsc --noEmit` in frontend.
+Model/controller tests cover rules and ownership with database doubles; they do not
+replace a live MongoDB transaction/concurrency test or device GPS check.

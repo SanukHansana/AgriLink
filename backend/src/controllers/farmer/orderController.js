@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Product from '../../models/Product.js';
+import DeliveryJob from '../../models/DeliveryJob.js';
 import { fail } from '../../services/bidding.js';
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
 import { isValidMongoId } from '../../utils/validation.js';
@@ -59,6 +60,10 @@ export async function updateFarmerOrderStatus(request, response, next) {
         status: { $nin: ['inTransit', 'delivered', 'cancelled'] },
       }).session(session);
       if (!order) fail('Editable order not found or delivery has already started', 404);
+      if (order.deliveryJob) fail('Cancel the unassigned delivery job first, or let the driver update this order', 409);
+      if (await DeliveryJob.exists({ orders: order._id, status: { $ne: 'cancelled' } }).session(session)) fail('This order is already scheduled for delivery', 409);
+      const allowed = { pending: ['confirmed', 'cancelled'], confirmed: ['preparing', 'cancelled'], preparing: ['dispatched', 'cancelled'], dispatched: ['cancelled'] };
+      if (!allowed[order.status]?.includes(status)) fail('Invalid order status transition', 409);
       if (status === 'cancelled' && order.stockReserved) {
         const product = await Product.findById(order.product).session(session);
         if (!product) fail('Cannot restore stock because the product no longer exists', 409);

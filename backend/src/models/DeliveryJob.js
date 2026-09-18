@@ -12,6 +12,8 @@ export const DELIVERY_JOB_STATUSES = [
 ];
 
 const contactLocationFields = {
+  latitude: { type: Number, min: -90, max: 90 },
+  longitude: { type: Number, min: -180, max: 180 },
   contactName: {
     type: String,
     required: [true, 'Contact name is required'],
@@ -51,6 +53,7 @@ const pickupPointSchema = new mongoose.Schema(
       required: true,
       min: [1, 'Pickup sequence must begin at 1'],
     },
+    completedAt: Date,
     notes: {
       type: String,
       trim: true,
@@ -144,6 +147,17 @@ const deliveryJobSchema = new mongoose.Schema(
     destination: {
       type: destinationSchema,
       required: [true, 'Delivery destination is required'],
+    },
+    dropoffPoints: [{
+      ...contactLocationFields,
+      orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
+      completedAt: Date,
+      receiverName: { type: String, trim: true, maxlength: 80 },
+    }],
+    driverLocation: {
+      latitude: { type: Number, min: -90, max: 90 },
+      longitude: { type: Number, min: -180, max: 180 },
+      recordedAt: Date,
     },
     cargoDescription: {
       type: String,

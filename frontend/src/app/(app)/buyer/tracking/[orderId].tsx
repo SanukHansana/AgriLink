@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DriverLocation } from '@/components/buyer/driver-location';
+import { DeliveryDate } from '@/components/buyer/delivery-date';
 import { BuyerDataState } from '@/components/buyer/buyer-data-state';
 import { BrandColors } from '@/constants/theme';
 import { useBuyerOrder } from '@/hooks/use-buyer-order';
@@ -89,6 +91,8 @@ function TrackingContent({
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl onRefresh={onRefresh} refreshing={refreshing} />}
       showsVerticalScrollIndicator={false}>
+      <DriverLocation orderId={order._id} />
+      <DeliveryDate order={order} onChange={onRefresh} />
       <View style={styles.routeCard}>
         <View style={styles.routeHeading}>
           <Text style={styles.routeLabel}>DELIVERY ROUTE</Text>

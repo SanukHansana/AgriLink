@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { completeStop, shareLocation } from '../controllers/driver/locationController.js';
 
 import {
   acceptDeliveryJob,
@@ -49,6 +50,8 @@ router.get('/jobs', getDriverDeliveryJobs);
 router.get('/jobs/:jobId', getDriverDeliveryJob);
 router.post('/jobs/:jobId/accept', acceptDeliveryJob);
 router.patch('/jobs/:jobId/status', updateDeliveryJobStatus);
+router.patch('/jobs/:jobId/location', shareLocation);
+router.patch('/jobs/:jobId/stops', completeStop);
 router.get('/earnings', getDriverEarnings);
 router.route('/issues').post(createDeliveryIssue).get(getDeliveryIssues);
 

@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import Bid from '../src/models/Bid.js';
 import Order from '../src/models/Order.js';
 import Product from '../src/models/Product.js';
+import Notification from '../src/models/Notification.js';
 import { acceptBid, validateBid, validAddress } from '../src/services/bidding.js';
 
 const listing = () => ({ _id: 'product', farmer: 'farmer', status: 'active', pricingMode: 'both', minimumBidPrice: 100, minimumOrderQuantity: 2, availableQuantity: 10, unit: 'kg', listingType: 'current', biddingClosesAt: new Date(Date.now() + 60000) });
@@ -37,6 +38,7 @@ test('acceptance creates one order at the bid price, reserves stock and prevents
     try { return await callback(session); }
     catch (error) { product.availableQuantity = before.quantity; product.status = before.status; bid.status = before.bidStatus; bid.order = before.order; orders = before.orders; throw error; }
   });
+  mock.method(Notification, 'updateOne', async () => ({}));
   mock.method(Bid, 'findOne', () => ({ session: async (value) => { assert.equal(value, session); return bid; } }));
   mock.method(Product, 'findOne', (filter) => ({ session: async () => filter.farmer === 'farmer' ? product : null }));
   mock.method(Product, 'findOneAndUpdate', async (filter, update, options) => {
@@ -82,5 +84,18 @@ test('acceptance creates one order at the bid price, reserves stock and prevents
     assert.equal(bid.order, 'order');
     await assert.rejects(acceptBid('bid', 'farmer'), /already been processed/);
     assert.equal(orders.length, 1);
+    product.availableQuantity = 10; product.status = 'active'; bid.status = 'countered'; bid.counterAmount = 150;
+    await assert.rejects(acceptBid('bid', 'farmer', { counter: true, buyerId: 'other' }), /Bid not found/);
+    const counter = await acceptBid('bid', 'farmer', { counter: true, buyerId: 'buyer' });
+    assert.equal(counter.order.pricePerUnit, 150);
+    assert.equal(bid.bidAmount, 150);
+    product.availableQuantity = 10; product.status = 'active'; product.autoAcceptHighestBid = true;
+    product.biddingClosesAt = new Date(0); bid.status = 'active';
+    await assert.rejects(acceptBid('bid', 'farmer'), /Bidding has closed/);
+    const automatic = await acceptBid('bid', 'farmer', { automatic: true });
+    assert.equal(automatic.order.pricePerUnit, 150);
+    assert.ok(product.auctionProcessedAt);
+    bid.status = 'active';
+    await assert.rejects(acceptBid('bid', 'farmer', { automatic: true }), /not eligible/);
   } finally { mock.restoreAll(); }
 });

@@ -1,3 +1,7 @@
+import mongoose from 'mongoose';
+import { saveDeliveryJob, removeDeliveryJob } from '../../services/deliveries.js';
+import { fail } from '../../services/bidding.js';
+import { notify } from '../../services/notifications.js';
 import DeliveryJob, { DELIVERY_JOB_STATUSES } from '../../models/DeliveryJob.js';
 import DriverProfile from '../../models/DriverProfile.js';
 import Order from '../../models/Order.js';
@@ -5,7 +9,6 @@ import Vehicle from '../../models/Vehicle.js';
 import {
   isPositiveNumber,
   isValidMongoId,
-  parseValidDate,
 } from '../../utils/validation.js';
 
 const JOB_FIELDS = [
@@ -41,11 +44,6 @@ function jobData(body) {
   }, {});
 }
 
-function normalizePickupPoints(points) {
-  if (!Array.isArray(points)) return points;
-  return points.map((point, index) => ({ ...point, sequence: index + 1 }));
-}
-
 function validateJobNumbers(data) {
   if (data.totalWeightKg !== undefined && !isPositiveNumber(data.totalWeightKg)) {
     return 'Total cargo weight must be a positive number';
@@ -67,30 +65,18 @@ function validateJobNumbers(data) {
   return null;
 }
 
-async function validateFarmerOrders(orderIds, farmerId) {
-  if (
-    !Array.isArray(orderIds) ||
-    orderIds.length === 0 ||
-    orderIds.some((orderId) => !isValidMongoId(orderId))
-  ) {
-    return false;
-  }
-
-  const uniqueOrderIds = [...new Set(orderIds.map(String))];
-  const count = await Order.countDocuments({
-    _id: { $in: uniqueOrderIds },
-    seller: farmerId,
-    status: { $nin: ['delivered', 'cancelled'] },
-  });
-  return count === uniqueOrderIds.length;
-}
-
 function populateJob(query) {
   return query
     .populate('orders', 'orderCode product quantity unit status deliveryAddress')
     .populate('createdBy', 'name')
     .populate('assignedDriver', 'name')
     .populate('vehicle', 'vehicleType registrationNumber capacityKg');
+}
+
+function visibleJob(job) {
+  const data = job.toObject();
+  if (!data.driverLocation?.recordedAt || Date.now() - data.driverLocation.recordedAt.getTime() > 120000) delete data.driverLocation;
+  return data;
 }
 
 export async function createDeliveryJob(request, response, next) {
@@ -101,23 +87,7 @@ export async function createDeliveryJob(request, response, next) {
       return response.status(400).json({ message: numberError });
     }
 
-    if (!(await validateFarmerOrders(data.orders, request.user._id))) {
-      return response.status(400).json({
-        message: 'Provide valid undelivered orders that belong to this farmer',
-      });
-    }
-
-    const pickupDate = parseValidDate(data.scheduledPickupAt);
-    if (!pickupDate) {
-      return response.status(400).json({ message: 'Enter a valid scheduled pickup time' });
-    }
-
-    const job = await DeliveryJob.create({
-      ...data,
-      pickupPoints: normalizePickupPoints(data.pickupPoints),
-      scheduledPickupAt: pickupDate,
-      createdBy: request.user._id,
-    });
+    const job = await saveDeliveryJob(data, request.user._id);
 
     return response.status(201).json({
       message: 'Delivery job created successfully',
@@ -140,7 +110,7 @@ export async function getFarmerDeliveryJobs(request, response, next) {
     }
 
     const jobs = await populateJob(DeliveryJob.find(filter).sort({ createdAt: -1 }));
-    return response.status(200).json({ count: jobs.length, jobs });
+    return response.status(200).json({ count: jobs.length, jobs: jobs.map(visibleJob) });
   } catch (error) {
     return next(error);
   }
@@ -160,7 +130,7 @@ export async function getFarmerDeliveryJob(request, response, next) {
       return response.status(404).json({ message: 'Delivery job not found' });
     }
 
-    return response.status(200).json({ job });
+    return response.status(200).json({ job: visibleJob(job) });
   } catch (error) {
     return next(error);
   }
@@ -182,32 +152,7 @@ export async function updateFarmerDeliveryJob(request, response, next) {
     if (numberError) {
       return response.status(400).json({ message: numberError });
     }
-    if (data.orders && !(await validateFarmerOrders(data.orders, request.user._id))) {
-      return response.status(400).json({ message: 'Provide valid undelivered farmer orders' });
-    }
-    if (data.scheduledPickupAt !== undefined) {
-      const pickupDate = parseValidDate(data.scheduledPickupAt);
-      if (!pickupDate) {
-        return response.status(400).json({ message: 'Enter a valid scheduled pickup time' });
-      }
-      data.scheduledPickupAt = pickupDate;
-    }
-    if (data.pickupPoints) {
-      data.pickupPoints = normalizePickupPoints(data.pickupPoints);
-    }
-
-    const job = await populateJob(
-      DeliveryJob.findOneAndUpdate(
-        { _id: jobId, createdBy: request.user._id, status: 'available' },
-        { $set: data },
-        { new: true, runValidators: true },
-      ),
-    );
-    if (!job) {
-      return response.status(404).json({
-        message: 'Available delivery job not found or it can no longer be edited',
-      });
-    }
+    const job = await saveDeliveryJob(data, request.user._id, jobId);
 
     return response.status(200).json({
       message: 'Delivery job updated successfully',
@@ -225,16 +170,7 @@ export async function deleteFarmerDeliveryJob(request, response, next) {
       return response.status(400).json({ message: 'Enter a valid delivery job ID' });
     }
 
-    const job = await DeliveryJob.findOneAndDelete({
-      _id: jobId,
-      createdBy: request.user._id,
-      status: 'available',
-    });
-    if (!job) {
-      return response.status(404).json({
-        message: 'Available delivery job not found or it can no longer be deleted',
-      });
-    }
+    await removeDeliveryJob(jobId, request.user._id);
 
     return response.status(200).json({ message: 'Delivery job deleted successfully' });
   } catch (error) {
@@ -264,6 +200,7 @@ export async function getDriverDeliveryJobs(request, response, next) {
       filter.$or = [
         { 'pickupPoints.district': district.trim() },
         { 'destination.district': district.trim() },
+        { 'dropoffPoints.district': district.trim() },
       ];
     }
 
@@ -351,31 +288,25 @@ export async function acceptDeliveryJob(request, response, next) {
       });
     }
 
-    const job = await populateJob(
-      DeliveryJob.findOneAndUpdate(
+    const job = await mongoose.connection.transaction(async (session) => {
+      const claimed = await DriverProfile.updateOne({ user: request.user._id, availabilityStatus: 'available' }, { $set: { availabilityStatus: 'busy' } }, { session });
+      if (!claimed.modifiedCount) fail('Driver is no longer available', 409);
+      const orders = await Order.find({ _id: { $in: availableJob.orders } }).session(session);
+      if (orders.length !== availableJob.orders.length || orders.some((order) => !['preparing', 'dispatched'].includes(order.status))) fail('An order is no longer ready for pickup', 409);
+      if (orders.some((order) => order.deliveryJob && String(order.deliveryJob) !== String(availableJob._id))) fail('An order is claimed by another delivery', 409);
+      for (const order of orders) await Order.updateOne({ _id: order._id }, { $set: { deliveryJob: availableJob._id } }, { session });
+      const assigned = await DeliveryJob.findOneAndUpdate(
         { _id: jobId, status: 'available', assignedDriver: { $exists: false } },
-        {
-          $set: {
-            assignedDriver: request.user._id,
-            vehicle: vehicle._id,
-            status: 'accepted',
-            acceptedAt: new Date(),
-          },
-          $push: {
-            statusUpdates: { status: 'accepted', note: 'Delivery job accepted' },
-          },
-        },
-        { new: true, runValidators: true },
-      ),
-    );
-    if (!job) {
-      return response.status(409).json({ message: 'Another driver accepted this job first' });
-    }
+        { $set: { assignedDriver: request.user._id, vehicle: vehicle._id, status: 'accepted', acceptedAt: new Date() }, $push: { statusUpdates: { status: 'accepted', note: 'Delivery job accepted' } } },
+        { new: true, runValidators: true, session },
+      );
+      if (!assigned) fail('Another driver accepted this job first', 409);
+      return assigned;
+    });
 
-    await DriverProfile.updateOne(
-      { user: request.user._id },
-      { $set: { availabilityStatus: 'busy' } },
-    );
+    await notify(availableJob.createdBy, `A driver accepted delivery ${job.jobCode}.`, `driver-assigned:${job._id}`);
+    const recipients = await Order.find({ _id: { $in: availableJob.orders } }).distinct('buyer');
+    for (const buyer of recipients) await notify(buyer, `A driver was assigned to your delivery ${job.jobCode}.`, `driver-assigned:${job._id}`);
 
     return response.status(200).json({
       message: 'Delivery job accepted successfully',
@@ -413,6 +344,10 @@ export async function updateDeliveryJobStatus(request, response, next) {
         message: `The next delivery status must be ${STATUS_TRANSITIONS[currentJob.status]}`,
       });
     }
+
+    if (status === 'collecting' && currentJob.scheduledPickupAt > new Date()) fail('The scheduled pickup time has not arrived yet', 409);
+    if (status === 'inTransit' && currentJob.pickupPoints.some((point) => !point.completedAt)) fail('Confirm every pickup stop before starting transit', 409);
+    if (status === 'delivered' && currentJob.dropoffPoints?.length && currentJob.dropoffPoints.some((point) => !point.completedAt)) fail('Confirm every drop-off before completing the trip', 409);
 
     const updateTime = new Date();
     const update = {
@@ -454,32 +389,17 @@ export async function updateDeliveryJobStatus(request, response, next) {
       };
     }
 
-    const job = await populateJob(
-      DeliveryJob.findOneAndUpdate(
-        {
-          _id: currentJob._id,
-          assignedDriver: request.user._id,
-          status: currentJob.status,
-        },
-        update,
-        { new: true, runValidators: true },
-      ),
-    );
-    if (!job) {
-      return response.status(409).json({ message: 'Delivery status changed; refresh and try again' });
-    }
-
-    await Order.updateMany(
-      { _id: { $in: currentJob.orders }, status: { $ne: 'cancelled' } },
-      { $set: { status: status === 'collecting' ? 'dispatched' : status } },
-    );
-
-    if (status === 'delivered') {
-      await DriverProfile.updateOne(
-        { user: request.user._id },
-        { $set: { availabilityStatus: 'available' } },
+    const job = await mongoose.connection.transaction(async (session) => {
+      const changed = await DeliveryJob.findOneAndUpdate(
+        { _id: currentJob._id, assignedDriver: request.user._id, status: currentJob.status },
+        { ...update, ...(status === 'delivered' ? { $unset: { driverLocation: '' } } : {}) },
+        { new: true, runValidators: true, session },
       );
-    }
+      if (!changed) fail('Delivery status changed; refresh and try again', 409);
+      await Order.updateMany({ _id: { $in: currentJob.orders }, status: { $ne: 'cancelled' } }, { $set: { status: status === 'collecting' ? 'dispatched' : status } }, { session });
+      if (status === 'delivered') await DriverProfile.updateOne({ user: request.user._id }, { $set: { availabilityStatus: 'available' } }, { session });
+      return changed;
+    });
 
     return response.status(200).json({
       message: 'Delivery status updated successfully',
