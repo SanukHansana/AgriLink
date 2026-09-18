@@ -2,6 +2,8 @@ import { type Href, useRouter } from 'expo-router';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DeliveryStops } from '@/components/driver/delivery-stops';
+import { mapUrl } from '@/components/location-fields';
 import { DriverDataState } from '@/components/driver/driver-data-state';
 import { BrandColors } from '@/constants/theme';
 import { useDriverOverview } from '@/hooks/use-driver-overview';
@@ -46,15 +48,12 @@ export default function DriverActiveDeliveryScreen() {
     );
   }
 
-  const nextStop = job.status === 'inTransit' ? job.destination : job.pickupPoints[0];
+  const nextStop = job.status === 'inTransit' ? job.dropoffPoints?.find((point) => !point.completedAt) ?? job.destination : job.pickupPoints.find((point) => !point.completedAt) ?? job.pickupPoints[0];
   const currentStepIndex = progressOrder.indexOf(job.status);
   const routeOrigin = job.pickupPoints[0]?.city ?? 'Farm pickup';
 
   const openMaps = () => {
-    const query = encodeURIComponent(
-      `${nextStop.addressLine}, ${nextStop.city}, ${nextStop.district}, Sri Lanka`,
-    );
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+    Linking.openURL(mapUrl(nextStop));
   };
 
   const callContact = () => {
@@ -119,6 +118,7 @@ export default function DriverActiveDeliveryScreen() {
           </View>
         </View>
 
+        <DeliveryStops job={job} onChange={overview.refresh} />
         <View style={styles.progressCard}>
           <Text style={styles.cardTitle}>Trip Progress</Text>
           {progressSteps.map((step, index) => {

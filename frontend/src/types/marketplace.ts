@@ -36,6 +36,9 @@ export type MarketplaceProduct = {
     district: string;
   };
   harvestDate?: string;
+  harvestStatus?: 'growing' | 'ready' | 'delayed';
+  harvestDelayNote?: string;
+  autoAcceptHighestBid?: boolean;
   pricingMode: PricingMode;
   fixedPrice?: number;
   minimumBidPrice?: number;

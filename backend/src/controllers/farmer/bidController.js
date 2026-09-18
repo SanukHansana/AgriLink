@@ -2,6 +2,7 @@ import Bid, { BID_STATUSES } from '../../models/Bid.js';
 import Product from '../../models/Product.js';
 import { isValidMongoId } from '../../utils/validation.js';
 import { acceptBid, expireBids } from '../../services/bidding.js';
+import { notify } from '../../services/notifications.js';
 
 async function farmerProductIds(farmerId) {
   return Product.find({ farmer: farmerId }).distinct('_id');
@@ -60,7 +61,7 @@ export async function updateFarmerBidStatus(request, response, next) {
     const productIds = await farmerProductIds(request.user._id);
     const bid = await populateBid(
       Bid.findOneAndUpdate(
-        { _id: bidId, product: { $in: productIds }, status: 'active' },
+        { _id: bidId, product: { $in: productIds }, status: { $in: ['active', 'countered'] } },
         { $set: { status } },
         { new: true, runValidators: true },
       ),
@@ -71,6 +72,7 @@ export async function updateFarmerBidStatus(request, response, next) {
       });
     }
 
+    await notify(bid.buyer._id ?? bid.buyer, 'Your bid was rejected by the farmer.', `bid-rejected:${bid._id}`);
     return response.status(200).json({
       message: `Bid ${status} successfully`,
       bid,

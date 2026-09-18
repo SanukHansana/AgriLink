@@ -3,6 +3,7 @@ import Product from '../../models/Product.js';
 import { isPositiveNumber, isValidMongoId } from '../../utils/validation.js';
 import { parseValidDate } from '../../utils/validation.js';
 import { validateBid, validAddress, expireBids } from '../../services/bidding.js';
+import { notify } from '../../services/notifications.js';
 
 export async function createBid(request, response, next) {
   try {
@@ -46,6 +47,7 @@ export async function createBid(request, response, next) {
       requestedDeliveryDate: deliveryDate,
     });
 
+    await notify(product.farmer, `New bid on ${product.name}: ${bidAmount} per ${product.unit}, ${quantity} ${product.unit}.`, `new-bid:${bid._id}`);
     return response.status(201).json({
       message: 'Bid placed successfully',
       bid,
