@@ -64,6 +64,8 @@ export type DriverVehicleInput = {
 };
 
 export type DeliveryContactLocation = {
+  latitude?: number;
+  longitude?: number;
   contactName: string;
   phone?: string;
   addressLine: string;
@@ -72,6 +74,7 @@ export type DeliveryContactLocation = {
 };
 
 export type DeliveryPickupPoint = DeliveryContactLocation & {
+  completedAt?: string;
   _id: string;
   sequence: number;
   notes?: string;
@@ -106,6 +109,8 @@ export type DeliveryJob = {
   orders: (string | DeliveryOrderSummary)[];
   pickupPoints: DeliveryPickupPoint[];
   destination: DeliveryContactLocation;
+  dropoffPoints?: (DeliveryContactLocation & { _id: string; orders: string[]; completedAt?: string; receiverName?: string })[];
+  driverLocation?: { latitude: number; longitude: number; recordedAt: string };
   cargoDescription: string;
   totalWeightKg: number;
   routeDistanceKm?: number;

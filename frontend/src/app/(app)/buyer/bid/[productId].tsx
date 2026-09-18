@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
 import { ProductImage } from '@/components/buyer/product-image';
 import { PrimaryButton } from '@/components/auth/primary-button';
+import { LocationFields, type MapPin } from '@/components/location-fields';
 import { FormField } from '@/components/auth/form-field';
 import { BrandColors } from '@/constants/theme';
 import { useMarketplaceProduct } from '@/hooks/use-marketplace-product';
@@ -32,6 +33,7 @@ export default function PlaceBidScreen() {
   const [addressLine, setAddressLine] = useState('');
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
+  const [pin, setPin] = useState<MapPin>({});
   const [deliveryDate, setDeliveryDate] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,7 +83,7 @@ export default function PlaceBidScreen() {
         productId,
         bidAmount: numericBid,
         quantity: numericQuantity,
-        deliveryAddress: { addressLine: addressLine.trim(), city: city.trim(), district: district.trim() },
+        deliveryAddress: { addressLine: addressLine.trim(), city: city.trim(), district: district.trim(), ...pin },
         requestedDeliveryDate: product.listingType === 'future' ? requestedDate?.toISOString() : undefined,
       });
       router.replace('/(app)/buyer/bids');
@@ -160,6 +162,7 @@ export default function PlaceBidScreen() {
             <FormField label="Delivery address" value={addressLine} onChangeText={setAddressLine} maxLength={180} placeholder="Street address" />
             <FormField label="City" value={city} onChangeText={setCity} maxLength={80} placeholder="Delivery city" />
             <FormField label="District" value={district} onChangeText={setDistrict} maxLength={80} placeholder="Delivery district" />
+            <LocationFields value={pin} onChange={setPin} />
             {product.listingType === 'future' && <FormField label="Requested delivery date (YYYY-MM-DD)" value={deliveryDate} onChangeText={setDeliveryDate} placeholder="YYYY-MM-DD" maxLength={10} />}
           </View>
 

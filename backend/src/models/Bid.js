@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-export const BID_STATUSES = ['active', 'accepted', 'rejected', 'expired'];
+export const BID_STATUSES = ['active', 'countered', 'withdrawn', 'accepted', 'rejected', 'expired'];
 export const PRODUCT_UNITS = ['kg', 'piece', 'box'];
 
 const bidSchema = new mongoose.Schema(
@@ -44,6 +44,8 @@ const bidSchema = new mongoose.Schema(
       index: true,
     },
     deliveryAddress: {
+      latitude: { type: Number, min: -90, max: 90 },
+      longitude: { type: Number, min: -180, max: 180 },
       addressLine: { type: String, trim: true, maxlength: 180 },
       city: { type: String, trim: true, maxlength: 80 },
       district: { type: String, trim: true, maxlength: 80 },
@@ -51,6 +53,7 @@ const bidSchema = new mongoose.Schema(
     },
     requestedDeliveryDate: Date,
     order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    counterAmount: { type: Number, min: 0.01 },
   },
   {
     timestamps: true,

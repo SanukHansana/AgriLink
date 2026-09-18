@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LocationFields, type MapPin } from '@/components/location-fields';
 import { FormField } from '@/components/auth/form-field';
 import { PrimaryButton } from '@/components/auth/primary-button';
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
@@ -35,6 +36,7 @@ export default function BuyerCheckoutScreen() {
   const { error: productError, isLoading, product, refresh } = useMarketplaceProduct(productId);
   const [addressLine, setAddressLine] = useState('');
   const [city, setCity] = useState('');
+  const [pin, setPin] = useState<MapPin>({});
   const [district, setDistrict] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState('');
@@ -121,6 +123,7 @@ export default function BuyerCheckoutScreen() {
           addressLine: addressLine.trim(),
           city: city.trim(),
           district: district.trim(),
+          ...pin,
           postalCode: postalCode.trim() || undefined,
         },
       };
@@ -212,6 +215,7 @@ export default function BuyerCheckoutScreen() {
                 />
               </View>
             </View>
+            <LocationFields value={pin} onChange={setPin} />
             <FormField
               keyboardType="number-pad"
               label="Postal code (optional)"

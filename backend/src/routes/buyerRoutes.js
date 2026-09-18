@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { changeBuyerBid } from '../controllers/buyer/bidActionsController.js';
+import { getOrderDelivery } from '../controllers/driver/locationController.js';
 
 import {
   createBid,
@@ -20,6 +22,7 @@ import {
   createFixedPriceOrder,
   getBuyerOrder,
   getBuyerOrders,
+  updateRequestedDeliveryDate,
 } from '../controllers/buyer/orderController.js';
 import {
   getMarketplaceProduct,
@@ -49,6 +52,7 @@ router
 router.post('/bids', createBid);
 router.get('/bids', getBuyerBids);
 router.get('/bids/:bidId', getBuyerBid);
+router.patch('/bids/:bidId', changeBuyerBid);
 
 router.get('/marketplace/products', searchMarketplaceProducts);
 router.get('/marketplace/products/:productId', getMarketplaceProduct);
@@ -57,6 +61,8 @@ router.post('/orders/fixed-price', createFixedPriceOrder);
 router.post('/orders/advance', createAdvanceOrder);
 router.get('/orders', getBuyerOrders);
 router.get('/orders/:orderId', getBuyerOrder);
+router.patch('/orders/:orderId/delivery-date', updateRequestedDeliveryDate);
+router.get('/orders/:orderId/delivery', getOrderDelivery);
 router.post('/orders/:orderId/reviews', createBuyerReview);
 router.post('/orders/:orderId/complaints', createBuyerComplaint);
 

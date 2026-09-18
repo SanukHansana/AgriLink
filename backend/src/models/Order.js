@@ -17,6 +17,8 @@ export const ORDER_STATUSES = [
 
 const deliveryAddressSchema = new mongoose.Schema(
   {
+    latitude: { type: Number, min: -90, max: 90 },
+    longitude: { type: Number, min: -180, max: 180 },
     addressLine: {
       type: String,
       required: [true, 'Delivery address is required'],
@@ -60,6 +62,7 @@ const orderSchema = new mongoose.Schema(
     },
     bid: { type: mongoose.Schema.Types.ObjectId, ref: 'Bid' },
     stockReserved: { type: Boolean, default: false },
+    deliveryJob: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryJob', index: true },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

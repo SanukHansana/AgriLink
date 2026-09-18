@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BidActions } from '@/components/buyer/bid-actions';
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
 import { BrandColors } from '@/constants/theme';
 import { useBuyerBids } from '@/hooks/use-buyer-bids';
@@ -12,6 +13,8 @@ import { formatLkr } from '@/utils/formatters';
 const filters: { label: string; value?: BidStatus }[] = [
   { label: 'All' },
   { label: 'Active', value: 'active' },
+  { label: 'Counter-offers', value: 'countered' },
+  { label: 'Withdrawn', value: 'withdrawn' },
   { label: 'Accepted', value: 'accepted' },
   { label: 'Rejected', value: 'rejected' },
   { label: 'Expired', value: 'expired' },
@@ -19,6 +22,8 @@ const filters: { label: string; value?: BidStatus }[] = [
 
 const statusLabels: Record<BidStatus, string> = {
   active: 'Active',
+  countered: 'Counter-offer',
+  withdrawn: 'Withdrawn',
   accepted: 'Accepted',
   rejected: 'Rejected',
   expired: 'Expired',
@@ -63,7 +68,7 @@ export default function BuyerBidsScreen() {
         ) : (
           <View style={styles.bidList}>
             {bids.map((bid) => (
-              <BidCard bid={bid} key={bid._id} />
+              <BidCard bid={bid} key={bid._id} onChange={refresh} />
             ))}
           </View>
         )}
@@ -72,7 +77,7 @@ export default function BuyerBidsScreen() {
   );
 }
 
-function BidCard({ bid }: { bid: BuyerBid }) {
+function BidCard({ bid, onChange }: { bid: BuyerBid; onChange: () => void }) {
   const router = useRouter();
   const productName = typeof bid.product === 'string' ? 'Product bid' : bid.product.name;
 
@@ -102,6 +107,7 @@ function BidCard({ bid }: { bid: BuyerBid }) {
           </Text>
         </View>
       </View>
+      <BidActions bid={bid} onChange={onChange} />
       {bid.order && <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/(app)/buyer/tracking/[orderId]', params: { orderId: bid.order! } })} style={{ marginTop: 16 }}><Text style={{ color: BrandColors.primary, fontWeight: '700' }}>View order →</Text></Pressable>}
     </View>
   );
@@ -186,6 +192,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
+  status_countered: { backgroundColor: '#fff3cd' },
+  status_withdrawn: { backgroundColor: '#eceeec' },
+  statusText_countered: { color: '#855f08' },
+  statusText_withdrawn: { color: '#64736b' },
   status_active: {
     backgroundColor: BrandColors.primarySoft,
   },

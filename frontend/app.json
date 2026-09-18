@@ -36,7 +36,13 @@
       "expo-font",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow AgriLink to save a map pin or share your delivery location while you use the app."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
