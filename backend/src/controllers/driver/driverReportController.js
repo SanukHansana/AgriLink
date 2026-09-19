@@ -23,9 +23,9 @@ export async function getDriverEarnings(request, response, next) {
   try {
     const jobs = await DeliveryJob.find({
       assignedDriver: request.user._id,
-      status: 'delivered',
+      status: { $in: ['delivered', 'completedWithIssues'] },
     })
-      .select('jobCode cargoDescription payoutAmount deliveredAt destination scheduledPickupAt updatedAt')
+      .select('jobCode cargoDescription payoutAmount payoutStatus paidAt paymentReference deliveredAt destination scheduledPickupAt updatedAt')
       .sort({ deliveredAt: -1 });
 
     const now = new Date();
@@ -41,10 +41,14 @@ export async function getDriverEarnings(request, response, next) {
     let todayEarnings = 0;
     let monthEarnings = 0;
     let totalEarnings = 0;
+    let paidAmount = 0; let unpaidAmount = 0; let heldAmount = 0;
     for (const job of jobs) {
       const completedDate = job.deliveredAt ?? job.updatedAt;
       const completedKey = dateKey(completedDate);
       totalEarnings += job.payoutAmount;
+      if (job.payoutStatus === 'paid') paidAmount += job.payoutAmount;
+      else if (job.payoutStatus === 'onHold') heldAmount += job.payoutAmount;
+      else unpaidAmount += job.payoutAmount;
       if (completedKey === todayKey) todayEarnings += job.payoutAmount;
       if (completedKey.startsWith(monthKey)) monthEarnings += job.payoutAmount;
       const weeklyDay = weeklyByDate.get(completedKey);
@@ -57,6 +61,7 @@ export async function getDriverEarnings(request, response, next) {
         todayEarnings,
         totalEarnings,
         totalTrips: jobs.length,
+        paidAmount, unpaidAmount, heldAmount,
       },
       transactions: jobs.slice(0, 20),
       weekly,
