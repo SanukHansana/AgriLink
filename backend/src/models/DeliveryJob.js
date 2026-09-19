@@ -9,6 +9,8 @@ export const DELIVERY_JOB_STATUSES = [
   'inTransit',
   'delivered',
   'cancelled',
+  'paused',
+  'completedWithIssues',
 ];
 
 const contactLocationFields = {
@@ -54,6 +56,7 @@ const pickupPointSchema = new mongoose.Schema(
       min: [1, 'Pickup sequence must begin at 1'],
     },
     completedAt: Date,
+    operationId: String,
     notes: {
       type: String,
       trim: true,
@@ -96,6 +99,7 @@ const deliveryProofSchema = new mongoose.Schema(
 
 const statusUpdateSchema = new mongoose.Schema(
   {
+    operationId: String,
     status: {
       type: String,
       enum: DELIVERY_JOB_STATUSES,
@@ -153,6 +157,16 @@ const deliveryJobSchema = new mongoose.Schema(
       orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
       completedAt: Date,
       receiverName: { type: String, trim: true, maxlength: 80 },
+      receiverSignature: { type: String, trim: true, maxlength: 120 },
+      photoData: { type: String, select: false, maxlength: 900000 },
+      photoAttached: { type: Boolean, default: false },
+      outcome: { type: String, enum: ['delivered', 'failed', 'partial'] },
+      failureReason: { type: String, trim: true, maxlength: 500 },
+      deliveredQuantities: [{ order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' }, quantity: { type: Number, min: 0 } }],
+      returnCompletedAt: Date,
+      returnOperationId: String,
+      operationId: String,
+      returnPhotoData: { type: String, select: false, maxlength: 900000 },
     }],
     driverLocation: {
       latitude: { type: Number, min: -90, max: 90 },
@@ -194,6 +208,13 @@ const deliveryJobSchema = new mongoose.Schema(
       default: 'available',
       index: true,
     },
+    pauseReason: { type: String, trim: true, maxlength: 500 },
+    resumeStatus: { type: String, enum: ['accepted', 'collecting', 'inTransit'] },
+    assignmentHistory: [{ driver: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, endedAt: Date, reason: String }],
+    payoutStatus: { type: String, enum: ['unpaid', 'onHold', 'paid'], default: 'unpaid' },
+    paidAt: Date,
+    paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    paymentReference: { type: String, trim: true, maxlength: 120 },
     assignedDriver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

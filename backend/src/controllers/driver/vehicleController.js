@@ -1,4 +1,6 @@
 import DeliveryJob from '../../models/DeliveryJob.js';
+import mongoose from 'mongoose';
+import { fail } from '../../services/bidding.js';
 import Vehicle from '../../models/Vehicle.js';
 import { isValidMongoId } from '../../utils/validation.js';
 
@@ -76,11 +78,14 @@ export async function updateDriverVehicle(request, response, next) {
       return response.status(400).json({ message: 'Provide at least one vehicle field to update' });
     }
 
-    const vehicle = await Vehicle.findOneAndUpdate(
+    const vehicle = await mongoose.connection.transaction(async (session) => {
+      if (await DeliveryJob.exists({ vehicle: vehicleId, assignedDriver: request.user._id, status: { $in: ['accepted', 'collecting', 'inTransit', 'paused'] } }).session(session)) fail('Finish or reassign the active trip before editing this vehicle', 409);
+      return Vehicle.findOneAndUpdate(
       { _id: vehicleId, driver: request.user._id },
       { $set: updates },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true, session },
     );
+    });
 
     if (!vehicle) {
       return response.status(404).json({ message: 'Vehicle not found' });
@@ -105,7 +110,7 @@ export async function deleteDriverVehicle(request, response, next) {
     const activeJob = await DeliveryJob.exists({
       vehicle: vehicleId,
       assignedDriver: request.user._id,
-      status: { $in: ['accepted', 'collecting', 'inTransit'] },
+      status: { $in: ['accepted', 'collecting', 'inTransit', 'paused'] },
     });
     if (activeJob) {
       return response.status(409).json({
