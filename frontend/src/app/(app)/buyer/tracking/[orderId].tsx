@@ -33,6 +33,8 @@ const statusRank: Record<OrderStatus, number> = {
   inTransit: 4,
   delivered: 5,
   cancelled: -1,
+  deliveryFailed: -1,
+  returned: -1,
 };
 
 export default function BuyerDeliveryTrackingScreen() {

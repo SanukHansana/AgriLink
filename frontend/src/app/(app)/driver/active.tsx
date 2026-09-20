@@ -2,6 +2,8 @@ import { type Href, useRouter } from 'expo-router';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { RecoveryActions } from '@/components/driver/recovery-actions';
+import { RoutePlan } from '@/components/driver/route-plan';
 import { DeliveryStops } from '@/components/driver/delivery-stops';
 import { mapUrl } from '@/components/location-fields';
 import { DriverDataState } from '@/components/driver/driver-data-state';
@@ -21,7 +23,7 @@ export default function DriverActiveDeliveryScreen() {
   const router = useRouter();
   const overview = useDriverOverview();
   const job = overview.myJobs.find((item) =>
-    ['accepted', 'collecting', 'inTransit'].includes(item.status),
+    ['accepted', 'collecting', 'inTransit', 'paused'].includes(item.status),
   );
 
   if (overview.isLoading || overview.error) {
@@ -118,7 +120,7 @@ export default function DriverActiveDeliveryScreen() {
           </View>
         </View>
 
-        <DeliveryStops job={job} onChange={overview.refresh} />
+        <RoutePlan jobId={job._id} /><DeliveryStops job={job} onChange={overview.refresh} /><RecoveryActions job={job} onChange={overview.refresh} />
         <View style={styles.progressCard}>
           <Text style={styles.cardTitle}>Trip Progress</Text>
           {progressSteps.map((step, index) => {

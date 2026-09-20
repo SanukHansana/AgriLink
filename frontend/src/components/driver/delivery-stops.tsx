@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
 import { AppState, Button, Linking, Text, View } from 'react-native';
-import { FormField } from '@/components/auth/form-field';
+import { StopOutcome } from './stop-outcome';
 import { mapUrl } from '@/components/location-fields';
 import { api, getApiErrorMessage } from '@/services/api';
 import type { DeliveryJob } from '@/types/logistics';
@@ -10,7 +10,6 @@ import type { DeliveryJob } from '@/types/logistics';
 export function DeliveryStops({ job, onChange }: { job: DeliveryJob; onChange: () => void }) {
   const [sharing, setSharing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [receiver, setReceiver] = useState('');
   const [error, setError] = useState<string | null>(null);
   const subscription = useRef<Location.LocationSubscription | null>(null);
   const focused = useRef(false);
@@ -47,12 +46,12 @@ export function DeliveryStops({ job, onChange }: { job: DeliveryJob; onChange: (
   const points = kind === 'pickup' ? job.pickupPoints : job.dropoffPoints?.length ? job.dropoffPoints : [{ ...job.destination, _id: 'legacy', completedAt: undefined }];
   const complete = async (index: number) => {
     setBusy(true); setError(null);
-    try { await api.patch(`/drivers/jobs/${job._id}/stops`, { kind, index, receiverName: receiver }); setReceiver(''); onChange(); }
+    try { await api.patch(`/drivers/jobs/${job._id}/stops`, { kind, index,  }); onChange(); }
     catch (cause) { setError(getApiErrorMessage(cause)); } finally { setBusy(false); }
   };
   return <View style={{ padding: 16, gap: 12 }}>
     <Text style={{ fontWeight: '700', fontSize: 16 }}>{kind === 'pickup' ? 'Pickup stops' : 'Drop-off stops'}</Text>
-    {points.map((point, index) => <View key={point._id} style={{ backgroundColor: '#edf5ef', padding: 14, borderRadius: 10, gap: 8 }}><Text>{index + 1}. {point.contactName} {point.completedAt ? '✓ Completed' : ''}</Text><Text>{point.addressLine}, {point.city}, {point.district}</Text><Button title="Navigate to this stop" onPress={() => void Linking.openURL(mapUrl(point))} />{point.phone && <Button title="Call contact" onPress={() => void Linking.openURL(`tel:${point.phone}`)} />}{!point.completedAt && ((kind === 'pickup' && job.status === 'collecting') || (kind === 'dropoff' && point._id !== 'legacy')) && <><Text>{kind === 'pickup' ? 'Confirm once collection at this stop is complete.' : 'Confirm after handing over this buyer’s order.'}</Text>{kind === 'dropoff' && <FormField label="Receiver name" value={receiver} onChangeText={setReceiver} maxLength={80} />}<Button title={kind === 'pickup' ? 'Confirm collected' : 'Confirm dropped off'} disabled={busy} onPress={() => void complete(index)} /></>}</View>)}
+    {points.map((point, index) => <View key={point._id} style={{ backgroundColor: '#edf5ef', padding: 14, borderRadius: 10, gap: 8 }}><Text>{index + 1}. {point.contactName} {point.completedAt ? '✓ Completed' : ''}</Text><Text>{point.addressLine}, {point.city}, {point.district}</Text><Button title="Navigate to this stop" onPress={() => void Linking.openURL(mapUrl(point))} />{point.phone && <Button title="Call contact" onPress={() => void Linking.openURL(`tel:${point.phone}`)} />}{!point.completedAt && kind === 'pickup' && job.status === 'collecting' && <><Text>{kind === 'pickup' ? 'Confirm once collection at this stop is complete.' : 'Confirm after handing over this buyer’s order.'}</Text><Button title={kind === 'pickup' ? 'Confirm collected' : 'Confirm dropped off'} disabled={busy} onPress={() => void complete(index)} /></>}{kind === 'dropoff' && point._id !== 'legacy' && <StopOutcome job={job} index={index} onChange={onChange} />}</View>)}
     <Text>Share your location with this delivery’s farmer and buyers while this screen is open. Sharing stops when you leave the screen or app.</Text>
     <Button title={sharing ? 'Stop sharing location' : 'Share live location'} disabled={busy} onPress={sharing ? stop : start} />
     {error && <Text style={{ color: '#a33425' }}>{error}</Text>}
