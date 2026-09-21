@@ -8,7 +8,7 @@ test('location updates are restricted to the assigned driver and active trip', a
   let failure;
   const next = (error) => { failure = error; };
   const response = { json(data) { return data; } };
-  const request = { params: { jobId: '507f1f77bcf86cd799439011' }, user: { _id: 'driver' }, body: { latitude: 91, longitude: 80 } };
+  const request = { params: { jobId: '507f1f77bcf86cd799439011' }, user: { _id: 'driver' }, body: { latitude: 91, longitude: 80, sessionId: 'test-session' } };
   mock.method(DeliveryJob, 'findOneAndUpdate', async (filter) => {
     assert.equal(filter.assignedDriver, 'driver');
     assert.deepEqual(filter.status.$in, ['accepted', 'collecting', 'inTransit']);

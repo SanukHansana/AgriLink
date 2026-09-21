@@ -33,11 +33,12 @@ export async function changeAssignment(jobId, actorId, action, reason, isAdmin =
       if (!isAdmin && (cargoCollected || job.status === 'paused')) fail('Cargo has been collected or the trip is paused. Request administrator reassignment.', 409);
       job.assignmentHistory.push({ driver: job.assignedDriver, endedAt: new Date(), reason: reason.trim() });
       await DriverProfile.updateOne({ user: job.assignedDriver }, { $set: { availabilityStatus: 'available' } }, { session });
-      job.resumeStatus = cargoCollected ? 'inTransit' : 'accepted';
+      job.resumeStatus = cargoCollected ? (job.pickupPoints.every((point) => point.completedAt) ? 'inTransit' : 'collecting') : 'accepted';
       job.assignedDriver = undefined; job.vehicle = undefined; job.acceptedAt = undefined;
       job.status = 'available'; job.pauseReason = undefined;
     }
     job.driverLocation = undefined;
+    job.trackingSessionId = undefined;
     await job.save({ session }); return job;
   });
   await notify(job.createdBy, action === 'pause' ? `Delivery ${job.jobCode} is paused: ${reason}` : `Delivery ${job.jobCode} is available for a replacement driver: ${reason}`, `assignment:${job._id}:${job.updatedAt.toISOString()}`);
@@ -47,9 +48,10 @@ export async function changeAssignment(jobId, actorId, action, reason, isAdmin =
 export async function returnStop(jobId, driverId, index, proof, operationId) {
   validateProof(proof);
   return mongoose.connection.transaction(async (session) => {
-    const job = await DeliveryJob.findOne({ _id: jobId, assignedDriver: driverId, status: 'inTransit' }).session(session);
+    const job = await DeliveryJob.findOne({ _id: jobId, assignedDriver: driverId }).session(session);
     const point = job?.dropoffPoints[index];
     if (point?.returnCompletedAt && operationId && point.returnOperationId === operationId) return job;
+    if (job?.status !== 'inTransit') fail('Return goods during an active trip', 409);
     if (!point || !['failed', 'partial'].includes(point.outcome) || point.returnCompletedAt) fail('Returnable stop not found', 409);
     for (const id of point.orders) {
       const order = await Order.findById(id).session(session);
@@ -67,6 +69,7 @@ export async function returnStop(jobId, driverId, index, proof, operationId) {
       await order.save({ session });
     }
     point.returnCompletedAt = new Date(); point.returnPhotoData = proof.photoData; point.returnOperationId = operationId;
+    point.returnReceiverName = proof.receiverName.trim(); point.returnReceiverSignature = proof.receiverSignature.trim();
     await job.save({ session }); return job;
   });
 }

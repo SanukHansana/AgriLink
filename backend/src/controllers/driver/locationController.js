@@ -8,10 +8,11 @@ import { isValidMongoId, validCoordinates } from '../../utils/validation.js';
 export async function shareLocation(request, response, next) {
   try {
     if (!isValidMongoId(request.params.jobId)) fail('Invalid delivery ID');
-    const { latitude, longitude, sharing } = request.body;
-    if (sharing !== false && !validCoordinates(latitude, longitude)) fail('Provide valid latitude and longitude');
-    const job = await DeliveryJob.findOneAndUpdate({ _id: request.params.jobId, assignedDriver: request.user._id, status: { $in: ['accepted', 'collecting', 'inTransit'] } },
-      sharing === false ? { $unset: { driverLocation: '' } } : { $set: { driverLocation: { latitude, longitude, recordedAt: new Date() } } }, { new: true, runValidators: true });
+    const { latitude, longitude, sharing, start, sessionId } = request.body;
+    if (typeof sessionId !== 'string' || !sessionId || sessionId.length > 80) fail('Provide a valid location-sharing session');
+    if (sharing !== false && start !== true && !validCoordinates(latitude, longitude)) fail('Provide valid latitude and longitude');
+    const job = await DeliveryJob.findOneAndUpdate({ _id: request.params.jobId, assignedDriver: request.user._id, status: { $in: ['accepted', 'collecting', 'inTransit'] }, ...(start === true ? {} : { trackingSessionId: sessionId }) },
+      sharing === false ? { $unset: { driverLocation: '', trackingSessionId: '' } } : start === true ? { $set: { trackingSessionId: sessionId }, $unset: { driverLocation: '' } } : { $set: { driverLocation: { latitude, longitude, recordedAt: new Date() } } }, { new: true, runValidators: true });
     if (!job) fail('Active assigned delivery not found', 404);
     return response.json({ location: job.driverLocation ?? null });
   } catch (error) { return next(error); }
@@ -28,7 +29,7 @@ export async function completeStop(request, response, next) {
       if (outcome !== 'delivered' && (typeof failureReason !== 'string' || failureReason.trim().length < 10 || failureReason.length > 500)) fail('Provide a failure reason of 10–500 characters');
     }
     const job = await mongoose.connection.transaction(async (session) => {
-      const job = await DeliveryJob.findOne({ _id: request.params.jobId, assignedDriver: request.user._id, status: kind === 'pickup' ? 'collecting' : 'inTransit' }).session(session);
+      const job = await DeliveryJob.findOne({ _id: request.params.jobId, assignedDriver: request.user._id }).session(session);
       const points = job?.[kind === 'pickup' ? 'pickupPoints' : 'dropoffPoints'];
       const point = stopId ? points?.find((point) => String(point._id) === stopId) : points?.[index];
       if (!point) fail('Stop not available', 409);
@@ -36,6 +37,7 @@ export async function completeStop(request, response, next) {
         if (operationId && point.operationId === operationId) return job;
         fail('Stop already completed', 409);
       }
+      if (job.status !== (kind === 'pickup' ? 'collecting' : 'inTransit')) fail('This trip is not at the required stage for this stop', 409);
       if (kind === 'dropoff') {
         const orders = await Order.find({ _id: { $in: point.orders } }).session(session);
         if (orders.length !== point.orders.length) fail('Order not found', 409);

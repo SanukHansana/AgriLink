@@ -405,7 +405,7 @@ export async function updateDeliveryJobStatus(request, response, next) {
     const job = await mongoose.connection.transaction(async (session) => {
       const changed = await DeliveryJob.findOneAndUpdate(
         { _id: currentJob._id, assignedDriver: request.user._id, status: currentJob.status },
-        { ...update, ...(status === 'delivered' ? { $unset: { driverLocation: '' } } : {}) },
+        { ...update, ...(status === 'delivered' ? { $unset: { driverLocation: '', trackingSessionId: '' } } : {}) },
         { new: true, runValidators: true, session },
       );
       if (!changed) fail('Delivery status changed; refresh and try again', 409);
