@@ -1,4 +1,5 @@
 import { create, isAxiosError } from 'axios';
+import { installOfflineDriver } from './offline-driver';
 
 function getApiBaseUrl() {
   const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/$/, '');
@@ -17,8 +18,12 @@ export const api = create({
   },
   timeout: 10000,
 });
+installOfflineDriver(api);
+let currentToken: string | null = null;
+export function getApiToken() { return currentToken; }
 
 export function setApiToken(token: string | null) {
+  currentToken = token;
   if (token) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
     return;

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button, Text, View } from 'react-native';
 import { FormField } from '@/components/auth/form-field';
 import { ProofForm, type StopProof } from './proof-form';
-import { api, getApiErrorMessage } from '@/services/api';
+import { getApiErrorMessage } from '@/services/api';
+import { sendDriverUpdate } from '@/services/offline-driver';
 import type { DeliveryJob } from '@/types/logistics';
 
 export function StopOutcome({ job, index, onChange }: { job: DeliveryJob; index: number; onChange: () => void }) {
@@ -18,8 +19,8 @@ export function StopOutcome({ job, index, onChange }: { job: DeliveryJob; index:
   const submit = async () => {
     setBusy(true); setError(null);
     try {
-      if (returning) await api.post(`/drivers/jobs/${job._id}/recovery`, { action: 'return', index, proof });
-      else await api.patch(`/drivers/jobs/${job._id}/stops`, { kind: 'dropoff', index, stopId: point._id, proof, outcome, failureReason: reason, deliveredQuantities: orders.map((order) => ({ order: typeof order === 'string' ? order : order._id, quantity: Number(quantities[typeof order === 'string' ? order : order._id]) })) });
+      if (returning) await sendDriverUpdate('post', `/drivers/jobs/${job._id}/recovery`, { action: 'return', index, proof });
+      else await sendDriverUpdate('patch', `/drivers/jobs/${job._id}/stops`, { kind: 'dropoff', index, stopId: point._id, proof, outcome, failureReason: reason, deliveredQuantities: orders.map((order) => ({ order: typeof order === 'string' ? order : order._id, quantity: Number(quantities[typeof order === 'string' ? order : order._id]) })) });
       onChange();
     } catch (cause) { setError(getApiErrorMessage(cause)); } finally { setBusy(false); }
   };

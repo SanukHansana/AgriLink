@@ -17,7 +17,7 @@ export async function driverRecovery(request, response, next) {
     else if (action === 'finishExceptions') job = await mongoose.connection.transaction(async (session) => {
       const job = await DeliveryJob.findOne({ _id: request.params.jobId, assignedDriver: request.user._id, status: 'inTransit' }).session(session);
       if (!job?.dropoffPoints.length || job.dropoffPoints.some((point) => !point.completedAt || (point.outcome !== 'delivered' && !point.returnCompletedAt)) || !job.dropoffPoints.some((point) => point.outcome !== 'delivered')) fail('Complete all stops and return undelivered goods before closing this trip', 409);
-      job.status = 'completedWithIssues'; job.payoutStatus = 'onHold'; job.deliveredAt = new Date(); job.driverLocation = undefined;
+      job.status = 'completedWithIssues'; job.payoutStatus = 'onHold'; job.deliveredAt = new Date(); job.driverLocation = undefined; job.trackingSessionId = undefined;
       await job.save({ session });
       await DriverProfile.updateOne({ user: request.user._id }, { $set: { availabilityStatus: 'available' } }, { session }); return job;
     });

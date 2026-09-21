@@ -164,6 +164,8 @@ const deliveryJobSchema = new mongoose.Schema(
       failureReason: { type: String, trim: true, maxlength: 500 },
       deliveredQuantities: [{ order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' }, quantity: { type: Number, min: 0 } }],
       returnCompletedAt: Date,
+      returnReceiverName: { type: String, trim: true, maxlength: 80 },
+      returnReceiverSignature: { type: String, trim: true, maxlength: 120 },
       returnOperationId: String,
       operationId: String,
       returnPhotoData: { type: String, select: false, maxlength: 900000 },
@@ -173,6 +175,7 @@ const deliveryJobSchema = new mongoose.Schema(
       longitude: { type: Number, min: -180, max: 180 },
       recordedAt: Date,
     },
+    trackingSessionId: String,
     cargoDescription: {
       type: String,
       required: [true, 'Cargo description is required'],

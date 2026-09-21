@@ -39,7 +39,7 @@ test('partial return restocks only undelivered quantity and rejects repeated ret
   const order = { quantity: 10, product: 'product', stockReserved: true, save: async () => {} };
   const product = { availableQuantity: 0, status: 'sold', save: async () => {} };
   const point = { orders: ['order'], outcome: 'partial', deliveredQuantities: [{ order: 'order', quantity: 4 }] };
-  const job = { dropoffPoints: [point], save: async () => {} };
+  const job = { status: 'inTransit', dropoffPoints: [point], save: async () => {} };
   mock.method(mongoose.connection, 'transaction', async (callback) => callback({}));
   mock.method(DeliveryJob, 'findOne', () => ({ session: async () => job }));
   mock.method(Order, 'findById', () => ({ session: async () => order }));

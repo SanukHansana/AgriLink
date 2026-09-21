@@ -42,7 +42,8 @@ for (const [path, model, fields, populate] of [
   router.get(`/${path}`, async (request, response) => {
     const page = Math.max(1, Math.min(100000, Number.parseInt(request.query.page, 10) || 1));
     let query = model.find().select(fields).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * 25).limit(25);
-    if (populate) query = query.populate(populate, 'name email');
+    if (path === 'driver-issues') query = query.populate('driver', 'name email').populate('job', 'jobCode status');
+    else if (populate) query = query.populate(populate, 'name email');
     const [items, total] = await Promise.all([query.lean(), model.countDocuments()]);
     response.json({ items, total, page, pages: Math.max(1, Math.ceil(total / 25)) });
   });
