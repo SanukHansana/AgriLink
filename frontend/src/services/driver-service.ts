@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 
 import { api } from '@/services/api';
+import { sendDriverUpdate } from './offline-driver';
 import type {
   DeliveryJob,
   DeliveryJobStatus,
@@ -81,11 +82,7 @@ export async function acceptDriverJob(jobId: string, vehicleId: string) {
 }
 
 export async function updateDriverJobStatus(jobId: string, input: DeliveryStatusInput) {
-  const response = await api.patch<{ message: string; job: DeliveryJob }>(
-    `/drivers/jobs/${jobId}/status`,
-    input,
-  );
-  return response.data;
+  return sendDriverUpdate('patch', `/drivers/jobs/${jobId}/status`, input);
 }
 
 export async function getDriverEarnings() {

@@ -5,9 +5,21 @@ import { requireRole } from '../middleware/roleMiddleware.js';
 import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
+import DeliveryIssue from '../models/DeliveryIssue.js';
+import DeliveryJob from '../models/DeliveryJob.js';
+import { reviewDriverIssue, adminRecovery, recordPayment } from '../controllers/driver/workflowController.js';
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
+router.patch('/driver-issues/:id', reviewDriverIssue);
+router.post('/deliveries/:id/reassign', adminRecovery);
+router.post('/deliveries/:id/payment', recordPayment);
+router.get('/driver-issues/:id/photo', async (request, response) => {
+  if (!mongoose.isValidObjectId(request.params.id)) return response.status(400).json({ message: 'Invalid issue ID' });
+  const issue = await DeliveryIssue.findById(request.params.id).select('+photoData');
+  if (!issue) return response.status(404).json({ message: 'Issue not found' });
+  return response.json({ photoData: issue.photoData ?? null });
+});
 
 router.get('/overview', async (_request, response) => {
   const [users, activeUsers, listings, activeListings, orders, pendingOrders, delivered] = await Promise.all([
@@ -24,11 +36,14 @@ for (const [path, model, fields, populate] of [
   ['users', User, 'name email role isActive isVerified verifiedAt createdAt', null],
   ['products', Product, 'name category status farmer createdAt', 'farmer'],
   ['orders', Order, 'orderCode status totalAmount buyer seller createdAt', 'buyer seller'],
+  ['driver-issues', DeliveryIssue, 'job driver issueType description status resolution photoAttached createdAt', 'driver job'],
+  ['deliveries', DeliveryJob, 'jobCode status assignedDriver payoutAmount payoutStatus paidAt paymentReference pauseReason createdAt', 'assignedDriver'],
 ]) {
   router.get(`/${path}`, async (request, response) => {
     const page = Math.max(1, Math.min(100000, Number.parseInt(request.query.page, 10) || 1));
     let query = model.find().select(fields).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * 25).limit(25);
-    if (populate) query = query.populate(populate, 'name email');
+    if (path === 'driver-issues') query = query.populate('driver', 'name email').populate('job', 'jobCode status');
+    else if (populate) query = query.populate(populate, 'name email');
     const [items, total] = await Promise.all([query.lean(), model.countDocuments()]);
     response.json({ items, total, page, pages: Math.max(1, Math.ceil(total / 25)) });
   });

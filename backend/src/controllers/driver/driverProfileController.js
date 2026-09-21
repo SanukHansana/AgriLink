@@ -1,4 +1,5 @@
 import DriverProfile from '../../models/DriverProfile.js';
+import DeliveryJob from '../../models/DeliveryJob.js';
 
 const PROFILE_FIELDS = [
   'phone',
@@ -54,6 +55,7 @@ export async function getDriverProfile(request, response, next) {
 export async function updateDriverProfile(request, response, next) {
   try {
     const updates = profileData(request.body);
+    if (updates.availabilityStatus && await DeliveryJob.exists({ assignedDriver: request.user._id, status: { $in: ['accepted', 'collecting', 'inTransit', 'paused'] } })) return response.status(409).json({ message: 'Finish or reassign your active delivery before changing availability' });
     if (Object.keys(updates).length === 0) {
       return response.status(400).json({ message: 'Provide at least one profile field to update' });
     }
@@ -79,6 +81,7 @@ export async function updateDriverProfile(request, response, next) {
 
 export async function deleteDriverProfile(request, response, next) {
   try {
+    if (await DeliveryJob.exists({ assignedDriver: request.user._id, status: { $in: ['accepted', 'collecting', 'inTransit', 'paused'] } })) return response.status(409).json({ message: 'Finish or reassign your active delivery before deleting your profile' });
     const profile = await DriverProfile.findOneAndDelete({ user: request.user._id });
     if (!profile) {
       return response.status(404).json({ message: 'Driver profile not found' });

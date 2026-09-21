@@ -12,7 +12,10 @@ export type DeliveryJobStatus =
   | 'collecting'
   | 'inTransit'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'paused'
+  | 'completedWithIssues';
+// Paused trips retain driver custody until administrator reassignment.
 
 export type DriverProfile = {
   _id: string;
@@ -109,8 +112,12 @@ export type DeliveryJob = {
   orders: (string | DeliveryOrderSummary)[];
   pickupPoints: DeliveryPickupPoint[];
   destination: DeliveryContactLocation;
-  dropoffPoints?: (DeliveryContactLocation & { _id: string; orders: string[]; completedAt?: string; receiverName?: string })[];
+  dropoffPoints?: (DeliveryContactLocation & { _id: string; orders: string[]; completedAt?: string; receiverName?: string; outcome?: 'delivered' | 'failed' | 'partial'; failureReason?: string; returnCompletedAt?: string; photoAttached?: boolean })[];
   driverLocation?: { latitude: number; longitude: number; recordedAt: string };
+  pauseReason?: string;
+  payoutStatus?: 'unpaid' | 'onHold' | 'paid';
+  paymentReference?: string;
+  paidAt?: string;
   cargoDescription: string;
   totalWeightKg: number;
   routeDistanceKm?: number;
@@ -146,6 +153,9 @@ export type DriverEarningsData = {
     todayEarnings: number;
     totalEarnings: number;
     totalTrips: number;
+    paidAmount: number;
+    unpaidAmount: number;
+    heldAmount: number;
   };
   weekly: {
     amount: number;
@@ -154,7 +164,7 @@ export type DriverEarningsData = {
   }[];
   transactions: Pick<
       DeliveryJob,
-      '_id' | 'jobCode' | 'cargoDescription' | 'payoutAmount' | 'deliveredAt' | 'destination' | 'scheduledPickupAt'
+      '_id' | 'jobCode' | 'cargoDescription' | 'payoutAmount' | 'payoutStatus' | 'paymentReference' | 'deliveredAt' | 'destination' | 'scheduledPickupAt'
     >[];
 };
 

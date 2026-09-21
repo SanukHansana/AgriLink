@@ -148,7 +148,8 @@ export default function DriverUpdateStatusScreen() {
               }
             : undefined,
       });
-      setJob(result.job);
+      if (result.job) setJob(result.job);
+      else { setJob({ ...job, status: nextStatus }); setSubmitError('Saved offline. The update will be confirmed after it syncs.'); }
       setNote('');
     } catch (requestError) {
       setSubmitError(getApiErrorMessage(requestError));

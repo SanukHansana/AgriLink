@@ -3,6 +3,7 @@ import {
   type PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -10,10 +11,14 @@ import {
 import { loginUser, registerUser } from '@/services/auth-service';
 import { api, setApiToken } from '@/services/api';
 import type { AuthUser, LoginInput, RegisterInput } from '@/types/auth';
+import { readSession, writeSession } from '@/services/session-store';
+import { setOfflineOwner, networkFailure } from '@/services/offline-driver';
+import { stopBackgroundSharing } from '@/services/background-location';
 
 type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isRestoring: boolean;
   user: AuthUser | null;
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
@@ -26,9 +31,31 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(true);
 
-  const applyAuthResponse = useCallback((token: string, authenticatedUser: AuthUser) => {
+  useEffect(() => {
+    let active = true;
+    const restore = async () => {
+      try {
+        const saved = await readSession();
+        if (!saved || !active) return;
+        setApiToken(saved.token); setOfflineOwner(saved.user.id);
+        try { const response = await api.get<{ user: AuthUser }>('/auth/me'); if (active) setUser(response.data.user); }
+        catch (cause) {
+          if (networkFailure(cause)) { if (active) setUser(saved.user); }
+          else { setApiToken(null); setOfflineOwner(null); await writeSession(null); await stopBackgroundSharing(); }
+        }
+      } catch { setApiToken(null); setOfflineOwner(null); }
+      finally { if (active) setIsRestoring(false); }
+    };
+    void restore(); return () => { active = false; };
+  }, []);
+
+  const applyAuthResponse = useCallback(async (token: string, authenticatedUser: AuthUser) => {
+    await stopBackgroundSharing();
+    await writeSession({ token, user: authenticatedUser }).catch(() => {});
     setApiToken(token);
+    setOfflineOwner(authenticatedUser.id);
     setUser(authenticatedUser);
   }, []);
 
@@ -37,7 +64,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsLoading(true);
       try {
         const response = await loginUser(input);
-        applyAuthResponse(response.token, response.user);
+        await applyAuthResponse(response.token, response.user);
       } finally {
         setIsLoading(false);
       }
@@ -50,7 +77,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsLoading(true);
       try {
         const response = await registerUser(input);
-        applyAuthResponse(response.token, response.user);
+        await applyAuthResponse(response.token, response.user);
       } finally {
         setIsLoading(false);
       }
@@ -58,9 +85,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [applyAuthResponse],
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setApiToken(null);
+    setOfflineOwner(null);
     setUser(null);
+    await writeSession(null);
+    await stopBackgroundSharing();
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -72,13 +102,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     () => ({
       isAuthenticated: Boolean(user),
       isLoading,
+      isRestoring,
       user,
       login,
       register,
       logout,
       refreshUser,
     }),
-    [isLoading, login, logout, refreshUser, register, user],
+    [isLoading, isRestoring, login, logout, refreshUser, register, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
