@@ -114,3 +114,37 @@ or HTTPS. Addresses still work when location permission is denied.
 Validation: `npm test` in backend, `npm run lint` and `npx tsc --noEmit` in frontend.
 Model/controller tests cover rules and ownership with database doubles; they do not
 replace a live MongoDB transaction/concurrency test or device GPS check.
+
+## Driver recovery and reliability
+
+Drivers can cancel acceptance before collecting cargo, or pause a trip and request
+administrator reassignment. Admin → Driver operations reviews issues, confirms cargo
+handover before releasing a trip for another driver, and records payments that have
+already been made. Licence expiry is checked using the Sri Lankan date. Vehicles
+cannot be edited while assigned to an active or paused trip.
+
+Each drop-off now records photo evidence and recipient confirmation. Failed or partial
+deliveries require a reason and delivered quantities; undelivered goods must be returned
+with farmer confirmation before closing the trip with issues. Only returned stock is
+restored, once. Trips completed with issues hold the driver payout for administrator
+review. Paid/unpaid/held totals are separate; recording payment does not transfer money.
+
+Route suggestions use saved coordinates and straight-line nearest-neighbour ordering,
+with pickups before drop-offs. Google Maps provides driving directions, road distance
+and ETA for the next route segment. This is not an integrated traffic/routing API.
+
+Driver data is cached for 48 hours. Stop, return and status updates can be queued offline
+and replayed in order under the same account with stable operation IDs. Server conflicts
+remain in Review & sync updates until reviewed, retried or discarded. Cancellation,
+reassignment and payments require connectivity. Pending updates are not server-confirmed
+until synchronized. Login sessions are saved in native SecureStore or browser session
+storage; tokens are not stored in the offline queue.
+
+Background GPS is a separate driver opt-in for an active trip, stops on logout, trip
+completion/reassignment, or after 12 hours, and has a persistent Android notification.
+Use a native development/production build with the new location permissions; Expo Go
+and browsers support foreground sharing. OS restrictions can stop tracking when the app
+is killed. Open the app to resume and check sharing status. No location history is stored.
+
+Restart backend and Expo. Rebuild native apps for the new modules/permissions. Run
+`npm test` in both backend and frontend for workflow and offline-queue checks.

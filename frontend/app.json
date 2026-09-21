@@ -40,9 +40,14 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Allow AgriLink to save a map pin or share your delivery location while you use the app."
+          "locationWhenInUsePermission": "Allow AgriLink to save a map pin or share your delivery location while you use the app.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "locationAlwaysAndWhenInUsePermission": "Allow AgriLink to share your location during an active delivery, including when the app is in the background."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

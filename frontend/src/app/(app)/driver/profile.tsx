@@ -1,3 +1,4 @@
+import { VehicleControls } from '@/components/driver/vehicle-controls';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -274,7 +275,7 @@ export default function DriverProfileScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Registered Vehicles</Text>
               {overview.vehicles.map((vehicle) => (
-                <View key={vehicle._id} style={styles.vehicleCard}>
+                <View key={vehicle._id}><View style={styles.vehicleCard}>
                   <View>
                     <Text style={styles.vehicleName}>
                       {[vehicle.make, vehicle.model].filter(Boolean).join(' ') ||
@@ -285,7 +286,7 @@ export default function DriverProfileScreen() {
                   <View style={styles.capacityBadge}>
                     <Text style={styles.capacityText}>{vehicle.capacityKg.toLocaleString()} kg</Text>
                   </View>
-                </View>
+                </View><VehicleControls vehicle={vehicle} onChange={overview.refresh} /></View>
               ))}
             </View>
           ) : null}

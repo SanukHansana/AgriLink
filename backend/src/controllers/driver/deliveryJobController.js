@@ -1,3 +1,4 @@
+import { validLicence } from '../../services/driver-workflows.js';
 import mongoose from 'mongoose';
 import { saveDeliveryJob, removeDeliveryJob } from '../../services/deliveries.js';
 import { fail } from '../../services/bidding.js';
@@ -23,7 +24,7 @@ const JOB_FIELDS = [
   'sharedDelivery',
 ];
 
-const ACTIVE_JOB_STATUSES = ['accepted', 'collecting', 'inTransit'];
+const ACTIVE_JOB_STATUSES = ['accepted', 'collecting', 'inTransit', 'paused'];
 const STATUS_TRANSITIONS = {
   accepted: 'collecting',
   collecting: 'inTransit',
@@ -257,6 +258,8 @@ export async function acceptDeliveryJob(request, response, next) {
       });
     }
 
+    if (!validLicence(profile.licenseExpiryDate)) fail('Renew your driving licence before accepting a job', 409);
+
     const activeJob = await DeliveryJob.exists({
       assignedDriver: request.user._id,
       status: { $in: ACTIVE_JOB_STATUSES },
@@ -289,15 +292,19 @@ export async function acceptDeliveryJob(request, response, next) {
     }
 
     const job = await mongoose.connection.transaction(async (session) => {
+      const currentProfile = await DriverProfile.findOne({ user: request.user._id }).session(session);
+      if (!currentProfile || !validLicence(currentProfile.licenseExpiryDate)) fail('Your driving licence is expired', 409);
+      const heldVehicle = await Vehicle.findOneAndUpdate({ _id: vehicleId, driver: request.user._id, isActive: true, capacityKg: { $gte: availableJob.totalWeightKg } }, { $set: { updatedAt: new Date() } }, { new: true, session });
+      if (!heldVehicle) fail('The selected vehicle is no longer suitable', 409);
       const claimed = await DriverProfile.updateOne({ user: request.user._id, availabilityStatus: 'available' }, { $set: { availabilityStatus: 'busy' } }, { session });
       if (!claimed.modifiedCount) fail('Driver is no longer available', 409);
       const orders = await Order.find({ _id: { $in: availableJob.orders } }).session(session);
-      if (orders.length !== availableJob.orders.length || orders.some((order) => !['preparing', 'dispatched'].includes(order.status))) fail('An order is no longer ready for pickup', 409);
+      if (orders.length !== availableJob.orders.length || orders.some((order) => !['preparing', 'dispatched', 'inTransit', 'delivered', 'deliveryFailed', 'returned'].includes(order.status))) fail('An order is no longer ready for pickup', 409);
       if (orders.some((order) => order.deliveryJob && String(order.deliveryJob) !== String(availableJob._id))) fail('An order is claimed by another delivery', 409);
       for (const order of orders) await Order.updateOne({ _id: order._id }, { $set: { deliveryJob: availableJob._id } }, { session });
       const assigned = await DeliveryJob.findOneAndUpdate(
         { _id: jobId, status: 'available', assignedDriver: { $exists: false } },
-        { $set: { assignedDriver: request.user._id, vehicle: vehicle._id, status: 'accepted', acceptedAt: new Date() }, $push: { statusUpdates: { status: 'accepted', note: 'Delivery job accepted' } } },
+        { $set: { assignedDriver: request.user._id, vehicle: vehicle._id, status: availableJob.resumeStatus ?? 'accepted', acceptedAt: new Date() }, $push: { statusUpdates: { status: 'accepted', note: 'Delivery job accepted' } } },
         { new: true, runValidators: true, session },
       );
       if (!assigned) fail('Another driver accepted this job first', 409);
@@ -320,7 +327,7 @@ export async function acceptDeliveryJob(request, response, next) {
 export async function updateDeliveryJobStatus(request, response, next) {
   try {
     const { jobId } = request.params;
-    const { note, proof, status } = request.body;
+    const { note, proof, status, operationId } = request.body;
     if (!isValidMongoId(jobId)) {
       return response.status(400).json({ message: 'Enter a valid delivery job ID' });
     }
@@ -331,6 +338,11 @@ export async function updateDeliveryJobStatus(request, response, next) {
       return response.status(400).json({ message: 'Status note cannot exceed 500 characters' });
     }
 
+    if (operationId && (typeof operationId !== 'string' || operationId.length > 80)) fail('Invalid operation ID');
+    if (operationId) {
+      const applied = await DeliveryJob.findOne({ _id: jobId, assignedDriver: request.user._id, 'statusUpdates.operationId': operationId });
+      if (applied) return response.json({ job: applied });
+    }
     const currentJob = await DeliveryJob.findOne({
       _id: jobId,
       assignedDriver: request.user._id,
@@ -347,7 +359,7 @@ export async function updateDeliveryJobStatus(request, response, next) {
 
     if (status === 'collecting' && currentJob.scheduledPickupAt > new Date()) fail('The scheduled pickup time has not arrived yet', 409);
     if (status === 'inTransit' && currentJob.pickupPoints.some((point) => !point.completedAt)) fail('Confirm every pickup stop before starting transit', 409);
-    if (status === 'delivered' && currentJob.dropoffPoints?.length && currentJob.dropoffPoints.some((point) => !point.completedAt)) fail('Confirm every drop-off before completing the trip', 409);
+    if (status === 'delivered' && currentJob.dropoffPoints?.length && currentJob.dropoffPoints.some((point) => !point.completedAt || point.outcome !== 'delivered')) fail('Confirm every drop-off before completing the trip', 409);
 
     const updateTime = new Date();
     const update = {
@@ -360,6 +372,7 @@ export async function updateDeliveryJobStatus(request, response, next) {
           status,
           note: note?.trim() || undefined,
           recordedAt: updateTime,
+          operationId,
         },
       },
     };
@@ -392,11 +405,11 @@ export async function updateDeliveryJobStatus(request, response, next) {
     const job = await mongoose.connection.transaction(async (session) => {
       const changed = await DeliveryJob.findOneAndUpdate(
         { _id: currentJob._id, assignedDriver: request.user._id, status: currentJob.status },
-        { ...update, ...(status === 'delivered' ? { $unset: { driverLocation: '' } } : {}) },
+        { ...update, ...(status === 'delivered' ? { $unset: { driverLocation: '', trackingSessionId: '' } } : {}) },
         { new: true, runValidators: true, session },
       );
       if (!changed) fail('Delivery status changed; refresh and try again', 409);
-      await Order.updateMany({ _id: { $in: currentJob.orders }, status: { $ne: 'cancelled' } }, { $set: { status: status === 'collecting' ? 'dispatched' : status } }, { session });
+      await Order.updateMany({ _id: { $in: currentJob.orders }, status: { $nin: ['cancelled', 'deliveryFailed', 'returned', 'delivered'] } }, { $set: { status: status === 'collecting' ? 'dispatched' : status } }, { session });
       if (status === 'delivered') await DriverProfile.updateOne({ user: request.user._id }, { $set: { availabilityStatus: 'available' } }, { session });
       return changed;
     });

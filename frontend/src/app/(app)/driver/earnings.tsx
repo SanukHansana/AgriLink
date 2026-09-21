@@ -61,14 +61,14 @@ export default function DriverEarningsScreen() {
           <Metric label="THIS MONTH" value={formatLkr(data.summary.monthEarnings)} />
         </View>
 
-        <Text style={styles.sectionTitle}>Recent Completed Trips</Text>
+        <View style={styles.metricsRow}><Metric label="PAID" value={formatLkr(data.summary.paidAmount)} /><Metric label="UNPAID" value={formatLkr(data.summary.unpaidAmount)} /><Metric label="ON HOLD" value={formatLkr(data.summary.heldAmount)} /></View><Text style={styles.totalHint}>Earnings are amounts owed. Only payments recorded by an administrator appear as paid.</Text><Text style={styles.sectionTitle}>Recent Completed Trips</Text>
         {data.transactions.length > 0 ? (
           data.transactions.map((transaction) => (
             <View key={transaction._id} style={styles.transactionCard}>
               <View style={styles.transactionCopy}>
                 <Text style={styles.transactionTitle}>{transaction.jobCode} · {transaction.destination.city}</Text>
                 <Text numberOfLines={1} style={styles.transactionCargo}>{transaction.cargoDescription}</Text>
-                <Text style={styles.transactionDate}>
+                <Text style={styles.transactionDate}>{transaction.payoutStatus ?? "unpaid"} {transaction.paymentReference ?? ""}</Text><Text style={styles.transactionDate}>
                   {new Date(transaction.deliveredAt ?? transaction.scheduledPickupAt).toLocaleString('en-LK')}
                 </Text>
               </View>

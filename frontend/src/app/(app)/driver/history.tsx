@@ -18,7 +18,7 @@ export default function DriverHistoryScreen() {
   const issuesState = useDriverIssues();
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const history = useMemo(
-    () => jobsState.jobs.filter((job) => ['delivered', 'cancelled'].includes(job.status)),
+    () => jobsState.jobs.filter((job) => ['delivered', 'cancelled', 'completedWithIssues'].includes(job.status)),
     [jobsState.jobs],
   );
   const visibleHistory = useMemo(

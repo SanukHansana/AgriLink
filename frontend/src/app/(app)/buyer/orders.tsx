@@ -39,6 +39,8 @@ const statusLabels: Record<OrderStatus, string> = {
   dispatched: 'Dispatched',
   inTransit: 'In Transit',
   delivered: 'Delivered',
+  deliveryFailed: 'Delivery failed',
+  returned: 'Returned',
   cancelled: 'Cancelled',
 };
 

@@ -46,7 +46,9 @@ export type OrderStatus =
   | 'dispatched'
   | 'inTransit'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'deliveryFailed'
+  | 'returned';
 
 export type OrderProductSummary = {
   _id: string;

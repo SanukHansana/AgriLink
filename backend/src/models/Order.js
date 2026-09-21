@@ -13,6 +13,8 @@ export const ORDER_STATUSES = [
   'inTransit',
   'delivered',
   'cancelled',
+  'deliveryFailed',
+  'returned',
 ];
 
 const deliveryAddressSchema = new mongoose.Schema(
@@ -63,6 +65,7 @@ const orderSchema = new mongoose.Schema(
     bid: { type: mongoose.Schema.Types.ObjectId, ref: 'Bid' },
     stockReserved: { type: Boolean, default: false },
     deliveryJob: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryJob', index: true },
+    deliveredQuantity: { type: Number, min: 0 },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
