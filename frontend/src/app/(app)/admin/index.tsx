@@ -2,12 +2,13 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useAuth } from '@/contexts/auth-context';
+import { OfficerDistrict } from '@/components/admin/officer-district';
 import { api, getApiErrorMessage } from '@/services/api';
 
 type Section = 'overview' | 'users' | 'products' | 'orders';
 type Overview = { users: number; activeUsers: number; listings: number; activeListings: number; orders: number; pendingOrders: number; deliveredValue: number };
 type Person = { name: string; email: string };
-type Row = { _id: string; name?: string; email?: string; role?: string; isActive?: boolean; isVerified?: boolean; status?: string; category?: string; farmer?: Person; buyer?: Person; seller?: Person; orderCode?: string; totalAmount?: number; createdAt: string };
+type Row = { _id: string; name?: string; email?: string; role?: string; isActive?: boolean; isVerified?: boolean; officerDistrict?: string; status?: string; category?: string; farmer?: Person; buyer?: Person; seller?: Person; orderCode?: string; totalAmount?: number; createdAt: string };
 type Collection = { items: Row[]; total: number; pages: number };
 const sections: { key: Section; label: string }[] = [{ key: 'overview', label: 'Overview' }, { key: 'users', label: 'Users' }, { key: 'products', label: 'Listings' }, { key: 'orders', label: 'Orders' }];
 const money = (value: number) => `LKR ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
               <View style={styles.cell}><Text style={styles.rowTitle}>{row.name ?? row.orderCode}</Text><Text style={styles.detail}>{row.email ?? row.farmer?.name ?? row.buyer?.name ?? 'Unavailable'}</Text></View>
               <Text style={styles.cell}>{roleLabel(row.role) ?? row.category ?? row.seller?.name ?? 'Unavailable'}{row.role === 'agricultureOfficer' ? ` · ${row.isVerified ? 'Verified' : 'Unverified'}` : ''}</Text>
               <Text style={[styles.cell, styles.status]}>{section === 'users' ? row.isActive ? 'Active' : 'Inactive' : row.status}</Text>
-              <View style={styles.cell}>{section === 'orders' ? <Text>{money(row.totalAmount ?? 0)}</Text> : row.role === 'admin' ? <Text style={styles.detail}>Protected admin</Text> : row.status === 'sold' ? <Text style={styles.detail}>Sold</Text> : <Button disabled={Boolean(busy) || Boolean(confirmation)} label={section === 'users' ? row.isActive ? 'Deactivate' : 'Activate' : row.status === 'active' ? 'Hide listing' : 'Activate'} onPress={() => { setVerificationAction(false); setConfirmation(row); }} />}{row.role === 'agricultureOfficer' && <Button disabled={Boolean(busy) || Boolean(confirmation)} label={row.isVerified ? 'Revoke verification' : 'Verify officer'} onPress={() => { setVerificationAction(true); setConfirmation(row); }} />}</View>
+              <View style={styles.cell}>{section === 'orders' ? <Text>{money(row.totalAmount ?? 0)}</Text> : row.role === 'admin' ? <Text style={styles.detail}>Protected admin</Text> : row.status === 'sold' ? <Text style={styles.detail}>Sold</Text> : <Button disabled={Boolean(busy) || Boolean(confirmation)} label={section === 'users' ? row.isActive ? 'Deactivate' : 'Activate' : row.status === 'active' ? 'Hide listing' : 'Activate'} onPress={() => { setVerificationAction(false); setConfirmation(row); }} />}{row.role === 'agricultureOfficer' && <><Button disabled={Boolean(busy) || Boolean(confirmation)} label={row.isVerified ? 'Revoke verification' : 'Verify officer'} onPress={() => { setVerificationAction(true); setConfirmation(row); }} /><OfficerDistrict id={row._id} district={row.officerDistrict} onChange={() => setRevision((value) => value + 1)} /></>}</View>
             </View>)}
             {!collection.items.length && <Text style={styles.empty}>No {section === 'products' ? 'listings' : section} yet.</Text>}
           </View></ScrollView>

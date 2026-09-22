@@ -200,9 +200,10 @@ export type ReportedListing = {
 };
 
 export type AdvisoryReportOverview = {
+  district: string;
   metrics: {
     totalTradeValue: number;
-    totalQuantity: number;
+    quantityByUnit: { unit: string; quantity: number }[];
     activeFarmers: number;
     requestsResolved: number;
     activeNotices: number;
@@ -210,11 +211,11 @@ export type AdvisoryReportOverview = {
   };
   categoryTrade: {
     category: string;
-    quantity: number;
     value: number;
     percentage: number;
   }[];
   topCrops: {
+    unit: string;
     name: string;
     district: string;
     quantity: number;

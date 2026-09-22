@@ -32,6 +32,7 @@ function publicUser(user) {
     role: user.role,
     createdAt: user.createdAt,
     isVerified: user.isVerified === true,
+    officerDistrict: user.officerDistrict,
     updatedAt: user.updatedAt,
   };
 }
