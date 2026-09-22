@@ -1,3 +1,6 @@
+import mongoose from 'mongoose';
+import { requestScope, assertOfficerOwnsRequest, safeAttachmentUrl } from '../../services/officer-access.js';
+import { fail } from '../../services/bidding.js';
 import AssistanceRequest, {
   ASSISTANCE_REQUEST_CATEGORIES,
   ASSISTANCE_REQUEST_PRIORITIES,
@@ -22,7 +25,8 @@ function requestData(body) {
   }, {});
 }
 
-function populateRequest(query) {
+function populateRequest(query, officer = false) {
+  if (officer) query = query.select('+internalNotes');
   return query
     .populate('farmer', 'name email')
     .populate('assignedOfficer', 'name email')
@@ -41,14 +45,10 @@ function validateFarmerInput(data) {
   ) {
     return 'Farm size must be a positive number';
   }
-  if (data.attachments !== undefined && !Array.isArray(data.attachments)) {
-    return 'Attachments must be provided as a list';
+  if (data.attachments !== undefined && (!Array.isArray(data.attachments) || data.attachments.length > 5 || data.attachments.some((item) => !safeAttachmentUrl(item.url)))) {
+    return 'Provide up to five attachments with valid HTTP or HTTPS links';
   }
   return null;
-}
-
-function requestAccessFilter(request) {
-  return request.user.role === 'farmer' ? { farmer: request.user._id } : {};
 }
 
 export async function createAssistanceRequest(request, response, next) {
@@ -85,16 +85,18 @@ export async function getAssistanceRequests(request, response, next) {
       return response.status(400).json({ message: 'Enter a valid request status filter' });
     }
 
-    const filter = requestAccessFilter(request);
+    const filter = requestScope(request.user);
     if (category) filter.category = category;
     if (priority) filter.priority = priority;
     if (status) filter.status = status;
-    if (district) filter['farmLocation.district'] = new RegExp(`^${escapeRegex(district)}$`, 'i');
+    if (district && request.user.role === 'farmer') filter['farmLocation.district'] = new RegExp(`^${escapeRegex(district)}$`, 'i');
 
-    const requests = await populateRequest(AssistanceRequest.find(filter)).sort({
+    const requests = await populateRequest(AssistanceRequest.find(filter), request.user.role === 'agricultureOfficer').sort({
       priority: -1,
       createdAt: -1,
     });
+    const rank = { high: 3, medium: 2, low: 1 };
+    requests.sort((a, b) => rank[b.priority] - rank[a.priority]);
     return response.status(200).json({ requests });
   } catch (error) {
     return next(error);
@@ -111,8 +113,8 @@ export async function getAssistanceRequest(request, response, next) {
     const assistanceRequest = await populateRequest(
       AssistanceRequest.findOne({
         _id: requestId,
-        ...requestAccessFilter(request),
-      }),
+        ...requestScope(request.user),
+      }), request.user.role === 'agricultureOfficer',
     );
     if (!assistanceRequest) {
       return response.status(404).json({ message: 'Assistance request not found' });
@@ -199,21 +201,21 @@ export async function reviewAssistanceRequest(request, response, next) {
       return response.status(400).json({ message: 'Provide review details to update' });
     }
 
-    const updates = { assignedOfficer: request.user._id };
-    if (status !== undefined) updates.status = status;
-    if (priority !== undefined) updates.priority = priority;
-    if (internalNotes !== undefined) updates.internalNotes = internalNotes;
-
-    const assistanceRequest = await AssistanceRequest.findByIdAndUpdate(
-      requestId,
-      { $set: updates },
-      { new: true, runValidators: true },
-    )
-      .populate('farmer', 'name email')
-      .populate('assignedOfficer', 'name email');
-    if (!assistanceRequest) {
-      return response.status(404).json({ message: 'Assistance request not found' });
-    }
+    const assistanceRequest = await mongoose.connection.transaction(async (session) => {
+      const record = await AssistanceRequest.findOne({ _id: requestId, ...requestScope(request.user) }).select('+internalNotes').session(session);
+      if (!record) fail('Request not found in your district', 404);
+      assertOfficerOwnsRequest(request.user, record);
+      const from = record.status;
+      const transitions = { pending: ['inReview', 'approved', 'revisionRequired', 'rejected'], inReview: ['inReview', 'approved', 'revisionRequired', 'rejected', 'resolved'], revisionRequired: ['inReview', 'revisionRequired'], approved: ['approved', 'inReview', 'resolved'] };
+      if (status && !transitions[from]?.includes(status)) fail('Invalid request status transition', 409);
+      record.assignedOfficer = request.user._id;
+      if (status !== undefined) record.status = status;
+      if (priority !== undefined) record.priority = priority;
+      if (internalNotes !== undefined) record.internalNotes = internalNotes;
+      record.history.push({ action: 'review', actor: request.user._id, fromStatus: from, toStatus: record.status });
+      await record.save({ session }); return record;
+    });
+    await assistanceRequest.populate([{ path: 'farmer', select: 'name email' }, { path: 'assignedOfficer', select: 'name email' }]);
 
     return response.status(200).json({
       message: 'Assistance request review updated successfully',
@@ -236,7 +238,7 @@ export async function respondToAssistanceRequest(request, response, next) {
     }
 
     const visitDate = scheduledVisitAt ? parseValidDate(scheduledVisitAt) : null;
-    if (scheduledVisitAt && !visitDate) {
+    if (scheduledVisitAt && (!visitDate || visitDate <= new Date())) {
       return response.status(400).json({ message: 'Enter a valid scheduled visit date' });
     }
     if (type === 'approvedAndScheduled' && !visitDate) {
@@ -250,20 +252,17 @@ export async function respondToAssistanceRequest(request, response, next) {
       rejected: 'rejected',
       information: 'inReview',
     };
-    const assistanceRequest = await AssistanceRequest.findById(requestId);
-    if (!assistanceRequest) {
-      return response.status(404).json({ message: 'Assistance request not found' });
-    }
-
-    assistanceRequest.assignedOfficer = request.user._id;
-    assistanceRequest.status = statusByResponse[type];
-    assistanceRequest.responses.push({
-      message,
-      respondedBy: request.user._id,
-      scheduledVisitAt: visitDate,
-      type,
+    const assistanceRequest = await mongoose.connection.transaction(async (session) => {
+      const record = await AssistanceRequest.findOne({ _id: requestId, ...requestScope(request.user) }).session(session);
+      if (!record) fail('Request not found in your district', 404);
+      assertOfficerOwnsRequest(request.user, record);
+      const from = record.status;
+      record.assignedOfficer = request.user._id;
+      record.status = statusByResponse[type];
+      record.responses.push({ message, respondedBy: request.user._id, scheduledVisitAt: visitDate, type });
+      record.history.push({ action: 'response', actor: request.user._id, fromStatus: from, toStatus: record.status });
+      await record.save({ session }); return record;
     });
-    await assistanceRequest.save();
     await assistanceRequest.populate([
       { path: 'farmer', select: 'name email' },
       { path: 'assignedOfficer', select: 'name email' },
