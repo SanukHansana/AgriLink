@@ -57,6 +57,7 @@ export type OfficerProfileInput = Pick<
 >;
 
 export type AssistanceRequest = {
+  visits?: { _id: string; scheduledAt: string; status: 'scheduled' | 'completed' | 'cancelled'; findings?: string; followUpAt?: string; followUpNotes?: string; completedAt?: string }[];
   _id: string;
   farmer: AdvisoryUser;
   category: AssistanceRequestCategory;

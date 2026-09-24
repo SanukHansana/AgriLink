@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { requestScope, assertOfficerOwnsRequest, safeAttachmentUrl } from '../../services/officer-access.js';
 import { fail } from '../../services/bidding.js';
+import FarmerProfile from '../../models/FarmerProfile.js';
 import AssistanceRequest, {
   ASSISTANCE_REQUEST_CATEGORIES,
   ASSISTANCE_REQUEST_PRIORITIES,
@@ -54,6 +55,9 @@ function validateFarmerInput(data) {
 export async function createAssistanceRequest(request, response, next) {
   try {
     const data = requestData(request.body);
+    const profile = await FarmerProfile.findOne({ user: request.user._id });
+    if (!profile) fail('Complete your farmer profile before requesting assistance');
+    data.farmLocation = { address: profile.farmLocation.addressLine, district: profile.farmLocation.district };
     const validationError = validateFarmerInput(data);
     if (validationError) return response.status(400).json({ message: validationError });
 
@@ -133,6 +137,7 @@ export async function updateAssistanceRequest(request, response, next) {
     }
 
     const updates = requestData(request.body);
+    if (updates.farmLocation) delete updates.farmLocation;
     if (Object.keys(updates).length === 0) {
       return response.status(400).json({ message: 'Provide at least one request field to update' });
     }
@@ -260,6 +265,10 @@ export async function respondToAssistanceRequest(request, response, next) {
       record.assignedOfficer = request.user._id;
       record.status = statusByResponse[type];
       record.responses.push({ message, respondedBy: request.user._id, scheduledVisitAt: visitDate, type });
+      if (type === 'approvedAndScheduled') {
+        if (record.visits.some((visit) => visit.status === 'scheduled')) fail('A visit is already scheduled. Reschedule it from Field Visits.', 409);
+        record.visits.push({ scheduledAt: visitDate, scheduledBy: request.user._id, sourceResponse: record.responses[record.responses.length - 1]._id });
+      }
       record.history.push({ action: 'response', actor: request.user._id, fromStatus: from, toStatus: record.status });
       await record.save({ session }); return record;
     });
