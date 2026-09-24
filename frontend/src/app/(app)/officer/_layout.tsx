@@ -69,6 +69,7 @@ export default function OfficerTabsLayout() {
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="reports" />,
         }}
       />
+      <Tabs.Screen name="visits" options={{ href: null }} />
       <Tabs.Screen
         name="profile"
         options={{

@@ -69,7 +69,7 @@ export default function AdminDashboard() {
         <View style={[styles.navigation, !desktop && { flexDirection: 'row', flexWrap: 'wrap' }]}>
           {sections.map((item) => <Pressable key={item.key} accessibilityRole="button" accessibilityState={{ selected: section === item.key }} disabled={Boolean(busy)} onPress={() => { setSection(item.key); setPage(1); setConfirmation(null); setNotice(null); }} style={[styles.navItem, section === item.key && styles.navSelected]}><Text style={styles.navText}>{item.label}</Text></Pressable>)}
         </View>
-        <Button label="Driver operations" onPress={() => router.push("/(app)/admin/driver-operations")} /><Text style={styles.sidebarCaption}>{user?.name}</Text><Button label="Sign out" onPress={logout} disabled={Boolean(busy)} />
+        <Button label="Officer case assignments" onPress={() => router.push("/(app)/admin/officer-assignments")} /><Button label="Driver operations" onPress={() => router.push("/(app)/admin/driver-operations")} /><Text style={styles.sidebarCaption}>{user?.name}</Text><Button label="Sign out" onPress={logout} disabled={Boolean(busy)} />
       </View>
       <ScrollView style={styles.main} contentContainerStyle={[styles.content, !desktop && { padding: 20 }]}>
         <View style={styles.header}><View><Text style={styles.eyebrow}>PLATFORM MANAGEMENT</Text><Text style={styles.title}>{sections.find((item) => item.key === section)?.label}</Text><Text style={styles.subtitle}>Manage your AgriLink community and marketplace.</Text></View><Button label="Refresh" disabled={loading || Boolean(busy)} onPress={() => setRevision((value) => value + 1)} /></View>

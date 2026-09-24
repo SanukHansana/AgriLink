@@ -1,3 +1,4 @@
+import { DocumentLink } from '@/components/advisory/document-link';
 import { useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -87,7 +88,7 @@ export default function OfficerRequestDetailsScreen() {
         <Text style={styles.sectionTitle}>Attached Documents ({request.attachments.length})</Text>
         {request.attachments.length > 0 ? (
           <View style={styles.attachments}>
-            {request.attachments.map((attachment) => <View key={attachment._id} style={styles.attachment}><Text style={styles.attachmentIcon}>▧</Text><Text numberOfLines={1} style={styles.attachmentName}>{attachment.name}</Text></View>)}
+            {request.attachments.map((attachment) => <DocumentLink key={attachment._id} name={attachment.name} url={attachment.url} />)}
           </View>
         ) : <Text style={styles.noAttachments}>No documents were attached.</Text>}
 
@@ -98,7 +99,7 @@ export default function OfficerRequestDetailsScreen() {
           </View>
         ) : null}
 
-        <Text style={styles.sectionTitle}>Officer Internal Notes</Text>
+        <Text style={styles.submitted}>Assigned officer: {request.assignedOfficer?.name ?? "Unassigned — saving a review claims this case"}</Text><Text style={styles.sectionTitle}>Officer Internal Notes</Text>
         <TextInput
           multiline
           onChangeText={setInternalNotes}

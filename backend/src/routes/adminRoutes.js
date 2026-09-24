@@ -16,6 +16,12 @@ const assignmentModels = { requests: AssistanceRequest, reports: ReportedListing
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
+router.get('/officers', async (request, response) => {
+  const page = Math.max(1, Number.parseInt(request.query.page, 10) || 1);
+  const filter = { role: 'agricultureOfficer', isVerified: true, isActive: true };
+  const [officers, total] = await Promise.all([User.find(filter).select('name email officerDistrict').sort({ name: 1 }).skip((page - 1) * 100).limit(100), User.countDocuments(filter)]);
+  return response.json({ officers, pages: Math.max(1, Math.ceil(total / 100)) });
+});
 router.patch('/officers/:id/district', async (request, response) => {
   const district = request.body.district;
   if (!mongoose.isValidObjectId(request.params.id) || typeof district !== 'string' || !district.trim() || district.length > 80) return response.status(400).json({ message: 'Provide an officer ID and service district' });

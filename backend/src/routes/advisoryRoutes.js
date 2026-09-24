@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getFieldVisits, changeFieldVisit } from '../controllers/advisory/fieldVisitController.js';
 
 import {
   getAdvisoryReportOverview,
@@ -54,6 +55,8 @@ const requireBuyer = requireRole('buyer');
 const requireOfficer = requireRole('agricultureOfficer');
 
 router.use(requireAuth);
+router.get('/visits', requireOfficer, getFieldVisits);
+router.patch('/requests/:requestId/visits/:visitId', requireOfficer, changeFieldVisit);
 
 router
   .route('/officer-profile')
