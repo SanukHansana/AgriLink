@@ -148,6 +148,7 @@ const assistanceRequestSchema = new mongoose.Schema(
     },
     internalNotes: {
       type: String,
+      select: false,
       trim: true,
       maxlength: [2000, 'Internal notes cannot exceed 2000 characters'],
     },
@@ -155,6 +156,17 @@ const assistanceRequestSchema = new mongoose.Schema(
       type: [responseSchema],
       default: [],
     },
+    history: [{ action: String, actor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, fromStatus: String, toStatus: String, recordedAt: { type: Date, default: Date.now } }],
+    visits: [{
+      sourceResponse: mongoose.Schema.Types.ObjectId,
+      scheduledAt: { type: Date, required: true },
+      status: { type: String, enum: ['scheduled', 'completed', 'cancelled'], default: 'scheduled' },
+      findings: { type: String, trim: true, maxlength: 2000 },
+      followUpAt: Date,
+      followUpNotes: { type: String, trim: true, maxlength: 1000 },
+      completedAt: Date,
+      scheduledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    }],
   },
   {
     timestamps: true,

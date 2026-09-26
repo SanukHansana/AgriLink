@@ -1,3 +1,5 @@
+import { FormField } from '@/components/auth/form-field';
+import { useAuth } from '@/contexts/auth-context';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
@@ -16,9 +18,12 @@ const noticeTypes: { label: string; value: AdvisoryNotice['type'] }[] = [
 
 export default function PublishNoticeScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [type, setType] = useState<AdvisoryNotice['type']>('general');
-  const [targetAudience, setTargetAudience] = useState<AdvisoryNotice['targetAudience']>('allFarmers');
-  const [targetDistrict, setTargetDistrict] = useState('');
+  const [targetAudience, setTargetAudience] = useState<AdvisoryNotice['targetAudience']>('district');
+  const [targetDistrict, setTargetDistrict] = useState(user?.officerDistrict ?? '');
+  const [scheduled, setScheduled] = useState('');
+  const [expiry, setExpiry] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [languages, setLanguages] = useState<AdvisoryNotice['languages']>(['en']);
@@ -35,14 +40,14 @@ export default function PublishNoticeScreen() {
     if (targetAudience === 'district' && !targetDistrict.trim()) { setError('Enter the target district.'); return; }
     setIsSubmitting(true); setError(null);
     try {
-      const draft = await createNotice({ type, title: title.trim(), description: description.trim(), targetAudience, targetDistrict: targetAudience === 'district' ? targetDistrict.trim() : undefined, languages, isEmergency });
+      const draft = await createNotice({ type, title: title.trim(), description: description.trim(), targetAudience, targetDistrict: targetAudience === 'district' ? targetDistrict.trim() : undefined, languages, isEmergency, scheduledPublishAt: scheduled.trim() || undefined, expiresAt: expiry.trim() || undefined });
       await publishNotice(draft._id);
       router.back();
     } catch (requestError) { setError(getApiErrorMessage(requestError)); }
     finally { setIsSubmitting(false); }
   };
 
-  return <SafeAreaView edges={['top']} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><View style={styles.header}><Pressable onPress={router.back}><Text style={styles.back}>‹</Text></Pressable><View><Text style={styles.title}>Publish New Notice</Text><Text style={styles.subtitle}>Broadcast updates to farmers</Text></View></View><FieldLabel text="Notice Type" /><View style={styles.choices}>{noticeTypes.map((item) => <Choice active={type === item.value} key={item.value} label={item.label} onPress={() => setType(item.value)} />)}</View><FieldLabel text="Target Audience" /><View style={styles.choices}><Choice active={targetAudience === 'allFarmers'} label="All Farmers" onPress={() => setTargetAudience('allFarmers')} /><Choice active={targetAudience === 'district'} label="District Only" onPress={() => setTargetAudience('district')} /></View>{targetAudience === 'district' ? <TextInput onChangeText={setTargetDistrict} placeholder="Target district" placeholderTextColor="#A1A4A1" style={styles.input} value={targetDistrict} /> : null}<FieldLabel text="Notice Title" /><TextInput onChangeText={setTitle} placeholder="e.g. Organic Fertilizer Distribution" placeholderTextColor="#A1A4A1" style={styles.input} value={title} /><FieldLabel text="Publishing Languages" /><View style={styles.choices}>{(['en', 'si', 'ta'] as const).map((language) => <Choice active={languages.includes(language)} key={language} label={language.toUpperCase()} onPress={() => toggleLanguage(language)} />)}</View><FieldLabel text="Detailed Description" /><TextInput multiline onChangeText={setDescription} placeholder="Write detailed advisory information or eligibility criteria here..." placeholderTextColor="#A1A4A1" style={styles.descriptionInput} textAlignVertical="top" value={description} /><View style={styles.switchRow}><Text style={styles.switchLabel}>Mark as Emergency Alert</Text><Switch onValueChange={setIsEmergency} thumbColor={BrandColors.white} trackColor={{ false: '#E5E7E5', true: BrandColors.primary }} value={isEmergency} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}<Pressable disabled={isSubmitting} onPress={submit} style={[styles.submit, isSubmitting && styles.disabled]}><Text style={styles.submitText}>{isSubmitting ? 'Publishing...' : 'Publish & Broadcast Notice'}</Text></Pressable></ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={['top']} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><View style={styles.header}><Pressable onPress={router.back}><Text style={styles.back}>‹</Text></Pressable><View><Text style={styles.title}>Publish New Notice</Text><Text style={styles.subtitle}>Broadcast updates to farmers</Text></View></View><FieldLabel text="Notice Type" /><View style={styles.choices}>{noticeTypes.map((item) => <Choice active={type === item.value} key={item.value} label={item.label} onPress={() => setType(item.value)} />)}</View><FieldLabel text="Target Audience" /><View style={styles.choices}><Choice active={targetAudience === 'allFarmers'} label="All Farmers" onPress={() => setTargetAudience('allFarmers')} /><Choice active={targetAudience === 'district'} label="District Only" onPress={() => setTargetAudience('district')} /></View>{targetAudience === 'district' ? <TextInput onChangeText={setTargetDistrict} placeholder="Target district" placeholderTextColor="#A1A4A1" style={styles.input} value={targetDistrict} /> : null}<FieldLabel text="Notice Title" /><TextInput onChangeText={setTitle} placeholder="e.g. Organic Fertilizer Distribution" placeholderTextColor="#A1A4A1" style={styles.input} value={title} /><FieldLabel text="Publishing Languages" /><View style={styles.choices}>{(['en', 'si', 'ta'] as const).map((language) => <Choice active={languages.includes(language)} key={language} label={language.toUpperCase()} onPress={() => toggleLanguage(language)} />)}</View><FieldLabel text="Detailed Description" /><TextInput multiline onChangeText={setDescription} placeholder="Write detailed advisory information or eligibility criteria here..." placeholderTextColor="#A1A4A1" style={styles.descriptionInput} textAlignVertical="top" value={description} /><View style={{ gap: 12, marginTop: 18 }}><FormField label="Scheduled publishing time (optional, ISO date/time)" value={scheduled} onChangeText={setScheduled} placeholder="2026-10-20T09:00:00+05:30" /><FormField label="Expiry time (optional, ISO date/time)" value={expiry} onChangeText={setExpiry} placeholder="2026-10-27T17:00:00+05:30" /></View><View style={styles.switchRow}><Text style={styles.switchLabel}>Mark as Emergency Alert</Text><Switch onValueChange={setIsEmergency} thumbColor={BrandColors.white} trackColor={{ false: '#E5E7E5', true: BrandColors.primary }} value={isEmergency} /></View>{error ? <Text style={styles.error}>{error}</Text> : null}<Pressable disabled={isSubmitting} onPress={submit} style={[styles.submit, isSubmitting && styles.disabled]}><Text style={styles.submitText}>{isSubmitting ? 'Publishing...' : scheduled.trim() ? 'Schedule Notice' : 'Publish & Broadcast Notice'}</Text></Pressable></ScrollView></SafeAreaView>;
 }
 
 function FieldLabel({ text }: { text: string }) { return <Text style={styles.label}>{text}</Text>; }

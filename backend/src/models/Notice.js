@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 export const NOTICE_TYPES = ['general', 'subsidy', 'training', 'emergency', 'marketSurplus'];
-export const NOTICE_STATUSES = ['draft', 'published', 'archived'];
+export const NOTICE_STATUSES = ['draft', 'scheduled', 'published', 'archived'];
 export const NOTICE_LANGUAGES = ['en', 'si', 'ta'];
 export const NOTICE_AUDIENCES = ['allFarmers', 'district'];
 
@@ -64,6 +64,9 @@ const noticeSchema = new mongoose.Schema(
       index: true,
     },
     publishedAt: Date,
+    scheduledPublishAt: Date,
+    expiresAt: Date,
+    notificationPending: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -78,6 +81,7 @@ noticeSchema.pre('validate', function validateDistrictAudience() {
 });
 
 noticeSchema.index({ status: 1, publishedAt: -1 });
+noticeSchema.index({ status: 1, scheduledPublishAt: 1, expiresAt: 1 });
 noticeSchema.index({ targetAudience: 1, targetDistrict: 1, status: 1 });
 
 const Notice = mongoose.model('Notice', noticeSchema);

@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
     isVerified: { type: Boolean, default: false },
+    officerDistrict: { type: String, trim: true, maxlength: 80 },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: Date,
   },

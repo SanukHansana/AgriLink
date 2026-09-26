@@ -101,7 +101,7 @@ export default function OfficerResponseScreen() {
         {type === 'approvedAndScheduled' ? (
           <View style={styles.visitCard}>
             <Text style={styles.visitTitle}>Schedule Farm Visit</Text>
-            <TextInput autoCapitalize="none" onChangeText={setScheduledVisitAt} placeholder="2026-10-18 09:30" placeholderTextColor="#999C99" style={styles.dateInput} value={scheduledVisitAt} />
+            <TextInput autoCapitalize="none" onChangeText={setScheduledVisitAt} placeholder="2026-10-18T09:30:00+05:30" placeholderTextColor="#999C99" style={styles.dateInput} value={scheduledVisitAt} />
             <Text style={styles.visitHint}>Enter the local visit date and time.</Text>
           </View>
         ) : null}

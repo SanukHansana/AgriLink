@@ -21,7 +21,7 @@ export default function OfficerDashboardScreen() {
 
   const pending = state.requests.filter((item) => item.status === 'pending').length;
   const activeNotices = state.notices.filter((item) => item.status === 'published').length;
-  const resolved = state.requests.filter((item) => ['approved', 'rejected', 'resolved'].includes(item.status)).length;
+  const resolved = state.requests.filter((item) => item.status === 'resolved').length;
   const firstName = user?.name.split(' ')[0] ?? 'Officer';
   const urgentRequest = state.requests.find((item) => item.priority === 'high' && item.status === 'pending');
   const emergencyNotice = state.notices.find((item) => item.isEmergency && item.status === 'published');
@@ -36,7 +36,7 @@ export default function OfficerDashboardScreen() {
           <Text style={styles.centerName}>{state.profile?.assignedCenter.name ?? 'Agriculture Advisory Center'}</Text>
           <Text style={styles.greeting}>Mr./Ms. {firstName},</Text>
           <Text style={styles.roleText}>
-            Agriculture Officer · {state.profile?.assignedCenter.district ?? 'Sri Lanka'}
+            Agriculture Officer · {user?.officerDistrict ?? 'District not assigned'}
           </Text>
         </View>
 
@@ -50,7 +50,7 @@ export default function OfficerDashboardScreen() {
           </Pressable>
         ) : null}
 
-        <Text style={styles.sectionTitle}>Today&apos;s Overview</Text>
+        <Pressable onPress={() => router.push("/(app)/officer/visits" as Href)} style={styles.setupBanner}><Text style={styles.setupTitle}>Field Visits & Follow-up Schedule →</Text></Pressable><Text style={styles.sectionTitle}>Today&apos;s Overview</Text>
         <View style={styles.metricsGrid}>
           <Metric color={BrandColors.warning} label="Pending Requests" value={String(pending)} />
           <Metric color={BrandColors.primary} label="Active Notices" value={String(activeNotices)} />
