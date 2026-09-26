@@ -12,10 +12,10 @@ export default function OfficerTabsLayout() {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (user?.role !== 'agricultureOfficer') return <Redirect href="/(app)" />;
-  if (!user.isVerified) return (
+  if (!user.isVerified || !user.officerDistrict) return (
     <View style={{ flex: 1, justifyContent: 'center', padding: 32, gap: 20, backgroundColor: '#f3f6f3' }}>
-      <Text style={{ fontSize: 26, fontWeight: '700', color: '#183d2c' }}>Awaiting admin verification</Text>
-      <Text>Your agriculture officer account must be verified by an administrator before you can access officer features.</Text>
+      <Text style={{ fontSize: 26, fontWeight: '700', color: '#183d2c' }}>{user.isVerified ? 'Awaiting district assignment' : 'Awaiting admin verification'}</Text>
+      <Text>An administrator must verify your account and assign your service district before you can access officer features.</Text>
       {error && <Text accessibilityRole="alert" style={{ color: '#a33425' }}>{error}</Text>}
       <Button title={checking ? 'Checking…' : 'Check verification status'} disabled={checking} onPress={async () => {
         setChecking(true); setError(null);
@@ -69,6 +69,7 @@ export default function OfficerTabsLayout() {
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="reports" />,
         }}
       />
+      <Tabs.Screen name="visits" options={{ href: null }} />
       <Tabs.Screen
         name="profile"
         options={{

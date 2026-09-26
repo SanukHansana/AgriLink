@@ -1,3 +1,6 @@
+import { officerDistrict, districtPattern } from '../../services/officer-access.js';
+import { liveNoticeFilter, validateNoticeSchedule } from '../../services/notice-scheduling.js';
+import { fail } from '../../services/bidding.js';
 import FarmerProfile from '../../models/FarmerProfile.js';
 import Notice, {
   NOTICE_AUDIENCES,
@@ -15,6 +18,8 @@ const NOTICE_FIELDS = [
   'targetDistrict',
   'languages',
   'isEmergency',
+  'scheduledPublishAt',
+  'expiresAt',
 ];
 
 function noticeData(body) {
@@ -56,12 +61,15 @@ async function noticeAccessFilter(request) {
       targetDistrict: new RegExp(`^${escapeRegex(profile.farmLocation.district)}$`, 'i'),
     });
   }
-  return { status: 'published', $or: audiences };
+  return { status: 'published', $and: [{ $or: audiences }, liveNoticeFilter()] };
 }
 
 export async function createNotice(request, response, next) {
   try {
     const data = noticeData(request.body);
+    officerDistrict(request.user);
+    validateNoticeSchedule(data);
+    if (data.targetAudience === 'district' && !districtPattern(request.user.officerDistrict).test(data.targetDistrict ?? '')) fail('Target notices to your assigned service district');
     const validationError = validateNoticeInput(data);
     if (validationError) return response.status(400).json({ message: validationError });
 
@@ -141,6 +149,12 @@ export async function updateNotice(request, response, next) {
       return response.status(400).json({ message: 'Archived notices cannot be edited' });
     }
 
+    const candidate = { ...notice.toObject(), ...updates };
+    // Existing dates can already be due; validate future dates only when changed.
+    validateNoticeSchedule(updates);
+    if (candidate.expiresAt && candidate.scheduledPublishAt && new Date(candidate.expiresAt) <= new Date(candidate.scheduledPublishAt)) fail('Expiry must be after publishing');
+    if (candidate.targetAudience === 'district' && !districtPattern(officerDistrict(request.user)).test(candidate.targetDistrict)) fail('Target notices to your assigned service district');
+    if (notice.status === 'published' && updates.scheduledPublishAt) fail('Published notices cannot be scheduled again');
     notice.set(updates);
     if (updates.targetAudience === 'allFarmers') notice.targetDistrict = undefined;
     await notice.save();
@@ -178,14 +192,16 @@ export async function publishNotice(request, response, next) {
       return response.status(400).json({ message: 'Enter a valid notice ID' });
     }
 
-    const notice = await Notice.findOneAndUpdate(
-      { _id: noticeId, officer: request.user._id, status: 'draft' },
-      { $set: { publishedAt: new Date(), status: 'published' } },
-      { new: true, runValidators: true },
-    ).populate('officer', 'name email');
-    if (!notice) return response.status(404).json({ message: 'Notice draft not found' });
+    const notice = await Notice.findOne({ _id: noticeId, officer: request.user._id, status: 'draft' });
+    if (!notice) fail('Notice draft not found', 404);
+    officerDistrict(request.user);
+    if (notice.targetAudience === 'district' && !districtPattern(request.user.officerDistrict).test(notice.targetDistrict)) fail('Target notices to your assigned service district');
+    if (notice.expiresAt && notice.expiresAt <= new Date()) fail('This notice has already expired');
+    const scheduled = notice.scheduledPublishAt && notice.scheduledPublishAt > new Date();
+    const published = await Notice.findOneAndUpdate({ _id: noticeId, officer: request.user._id, status: 'draft', updatedAt: notice.updatedAt }, { $set: { status: scheduled ? 'scheduled' : 'published', publishedAt: scheduled ? null : new Date(), notificationPending: !scheduled } }, { new: true, runValidators: true }).populate('officer', 'name email');
+    if (!published) fail('Notice changed. Refresh and try again.', 409);
 
-    return response.status(200).json({ message: 'Notice published successfully', notice });
+    return response.status(200).json({ message: scheduled ? 'Notice scheduled successfully' : 'Notice published successfully', notice: published });
   } catch (error) {
     return next(error);
   }
@@ -199,8 +215,8 @@ export async function archiveNotice(request, response, next) {
     }
 
     const notice = await Notice.findOneAndUpdate(
-      { _id: noticeId, officer: request.user._id, status: 'published' },
-      { $set: { status: 'archived' } },
+      { _id: noticeId, officer: request.user._id, status: { $in: ['published', 'scheduled'] } },
+      { $set: { status: 'archived', notificationPending: false } },
       { new: true, runValidators: true },
     ).populate('officer', 'name email');
     if (!notice) return response.status(404).json({ message: 'Published notice not found' });

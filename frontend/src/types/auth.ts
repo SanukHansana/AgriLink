@@ -8,6 +8,7 @@ export type AuthUser = {
   email: string;
   role: UserRole;
   isVerified: boolean;
+  officerDistrict?: string;
   createdAt: string;
   updatedAt: string;
 };

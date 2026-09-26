@@ -8,9 +8,42 @@ import Order from '../models/Order.js';
 import DeliveryIssue from '../models/DeliveryIssue.js';
 import DeliveryJob from '../models/DeliveryJob.js';
 import { reviewDriverIssue, adminRecovery, recordPayment } from '../controllers/driver/workflowController.js';
+import AssistanceRequest from '../models/AssistanceRequest.js';
+import ReportedListing from '../models/ReportedListing.js';
+import { districtPattern } from '../services/officer-access.js';
+
+const assignmentModels = { requests: AssistanceRequest, reports: ReportedListing };
 
 const router = Router();
 router.use(requireAuth, requireRole('admin'));
+router.get('/officers', async (request, response) => {
+  const page = Math.max(1, Number.parseInt(request.query.page, 10) || 1);
+  const filter = { role: 'agricultureOfficer', isVerified: true, isActive: true };
+  const [officers, total] = await Promise.all([User.find(filter).select('name email officerDistrict').sort({ name: 1 }).skip((page - 1) * 100).limit(100), User.countDocuments(filter)]);
+  return response.json({ officers, pages: Math.max(1, Math.ceil(total / 100)) });
+});
+router.patch('/officers/:id/district', async (request, response) => {
+  const district = request.body.district;
+  if (!mongoose.isValidObjectId(request.params.id) || typeof district !== 'string' || !district.trim() || district.length > 80) return response.status(400).json({ message: 'Provide an officer ID and service district' });
+  const user = await User.findOneAndUpdate({ _id: request.params.id, role: 'agricultureOfficer' }, { $set: { officerDistrict: district.trim() } }, { new: true, runValidators: true });
+  if (!user) return response.status(404).json({ message: 'Officer not found' });
+  return response.json({ user });
+});
+router.patch('/officer-assignments/:kind/:id', async (request, response) => {
+  const model = assignmentModels[request.params.kind];
+  if (!model || !mongoose.isValidObjectId(request.params.id) || !mongoose.isValidObjectId(request.body.officerId)) return response.status(400).json({ message: 'Provide valid case and officer IDs' });
+  const officer = await User.findOne({ _id: request.body.officerId, role: 'agricultureOfficer', isVerified: true, isActive: true });
+  if (!officer?.officerDistrict) return response.status(400).json({ message: 'Assign a district to an active verified officer first' });
+  let filter = { _id: request.params.id, status: { $nin: ['resolved', 'rejected', 'dismissed'] } };
+  if (request.params.kind === 'requests') filter['farmLocation.district'] = districtPattern(officer.officerDistrict);
+  else {
+    const products = await Product.find({ 'farmLocation.district': districtPattern(officer.officerDistrict) }).distinct('_id');
+    filter.product = { $in: products };
+  }
+  const record = await model.findOneAndUpdate(filter, { $set: { assignedOfficer: officer._id }, $push: { history: { action: 'reassigned', actor: request.user._id, recordedAt: new Date() } } }, { new: true });
+  if (!record) return response.status(409).json({ message: 'Open case not found in the officer’s district' });
+  return response.json({ record });
+});
 router.patch('/driver-issues/:id', reviewDriverIssue);
 router.post('/deliveries/:id/reassign', adminRecovery);
 router.post('/deliveries/:id/payment', recordPayment);
@@ -33,7 +66,9 @@ router.get('/overview', async (_request, response) => {
 
 // Paginated collections never expose password hashes or full order addresses.
 for (const [path, model, fields, populate] of [
-  ['users', User, 'name email role isActive isVerified verifiedAt createdAt', null],
+  ['users', User, 'name email role isActive isVerified officerDistrict verifiedAt createdAt', null],
+  ['officer-requests', AssistanceRequest, 'title farmer farmLocation status assignedOfficer createdAt', 'farmer assignedOfficer'],
+  ['officer-reports', ReportedListing, 'product farmer status assignedOfficer createdAt', 'farmer assignedOfficer'],
   ['products', Product, 'name category status farmer createdAt', 'farmer'],
   ['orders', Order, 'orderCode status totalAmount buyer seller createdAt', 'buyer seller'],
   ['driver-issues', DeliveryIssue, 'job driver issueType description status resolution photoAttached createdAt', 'driver job'],

@@ -57,6 +57,7 @@ export type OfficerProfileInput = Pick<
 >;
 
 export type AssistanceRequest = {
+  visits?: { _id: string; scheduledAt: string; status: 'scheduled' | 'completed' | 'cancelled'; findings?: string; followUpAt?: string; followUpNotes?: string; completedAt?: string }[];
   _id: string;
   farmer: AdvisoryUser;
   category: AssistanceRequestCategory;
@@ -99,7 +100,9 @@ export type AdvisoryNotice = {
   targetDistrict?: string;
   languages: ('en' | 'si' | 'ta')[];
   isEmergency: boolean;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'scheduled' | 'published' | 'archived';
+  scheduledPublishAt?: string;
+  expiresAt?: string;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -110,6 +113,8 @@ export type AdvisoryNoticeInput = Pick<
   'type' | 'title' | 'description' | 'targetAudience' | 'languages' | 'isEmergency'
 > & {
   targetDistrict?: string;
+  scheduledPublishAt?: string;
+  expiresAt?: string;
 };
 
 export type QualityGuideline = {
@@ -200,9 +205,10 @@ export type ReportedListing = {
 };
 
 export type AdvisoryReportOverview = {
+  district: string;
   metrics: {
     totalTradeValue: number;
-    totalQuantity: number;
+    quantityByUnit: { unit: string; quantity: number }[];
     activeFarmers: number;
     requestsResolved: number;
     activeNotices: number;
@@ -210,11 +216,11 @@ export type AdvisoryReportOverview = {
   };
   categoryTrade: {
     category: string;
-    quantity: number;
     value: number;
     percentage: number;
   }[];
   topCrops: {
+    unit: string;
     name: string;
     district: string;
     quantity: number;

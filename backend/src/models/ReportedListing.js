@@ -74,6 +74,8 @@ const reportedListingSchema = new mongoose.Schema(
       maxlength: [1200, 'Listing review note cannot exceed 1200 characters'],
     },
     reviewedAt: Date,
+    assignedOfficer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    history: [{ action: String, actor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, fromStatus: String, toStatus: String, note: String, recordedAt: { type: Date, default: Date.now } }],
   },
   { timestamps: true, versionKey: false },
 );
