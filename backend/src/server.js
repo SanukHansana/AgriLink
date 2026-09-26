@@ -3,6 +3,7 @@ import 'dotenv/config';
 import app from './app.js';
 import connectDatabase from './config/database.js';
 import { startAuctionWorker } from './services/auctions.js';
+import { startNoticeWorker } from './services/notice-scheduling.js';
 
 const port = Number(process.env.PORT) || 5001;
 
@@ -14,6 +15,7 @@ async function startServer() {
 
     await connectDatabase();
     startAuctionWorker();
+    startNoticeWorker();
 
     app.listen(port, () => {
       console.log(`AgriLink API listening on port ${port}`);

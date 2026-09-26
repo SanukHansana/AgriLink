@@ -1,3 +1,5 @@
+import { notifyDistrictOfficers, bestEffortNotification } from '../../services/advisory-notifications.js';
+import { notify } from '../../services/notifications.js';
 import mongoose from 'mongoose';
 import { requestScope, assertOfficerOwnsRequest, safeAttachmentUrl } from '../../services/officer-access.js';
 import { fail } from '../../services/bidding.js';
@@ -65,6 +67,7 @@ export async function createAssistanceRequest(request, response, next) {
       ...data,
       farmer: request.user._id,
     });
+    await bestEffortNotification(() => notifyDistrictOfficers(assistanceRequest));
     await assistanceRequest.populate('farmer', 'name email');
 
     return response.status(201).json({
@@ -159,6 +162,7 @@ export async function updateAssistanceRequest(request, response, next) {
       });
     }
 
+    await bestEffortNotification(() => notifyDistrictOfficers(assistanceRequest));
     return response.status(200).json({
       message: 'Assistance request updated successfully',
       request: assistanceRequest,
@@ -278,6 +282,7 @@ export async function respondToAssistanceRequest(request, response, next) {
       { path: 'responses.respondedBy', select: 'name email' },
     ]);
 
+    await notify(assistanceRequest.farmer._id, `Officer response to ${assistanceRequest.title}: ${type}${visitDate ? '. Visit: ' + visitDate.toISOString() : ''}. Open Agriculture Assistance to read the reply.`, `response:${assistanceRequest._id}:${assistanceRequest.responses[assistanceRequest.responses.length - 1]._id}`);
     return response.status(201).json({
       message: 'Official response sent successfully',
       request: assistanceRequest,

@@ -1,3 +1,4 @@
+import { liveNoticeFilter } from '../../services/notice-scheduling.js';
 import AssistanceRequest from '../../models/AssistanceRequest.js';
 import Notice from '../../models/Notice.js';
 import Order from '../../models/Order.js';
@@ -20,7 +21,7 @@ export async function getAdvisoryReportOverview(request, response, next) {
       Order.aggregate(tradePipeline(district)),
       User.countDocuments({ _id: { $in: farmers }, role: 'farmer', isActive: true }),
       AssistanceRequest.countDocuments({ 'farmLocation.district': pattern, status: 'resolved' }),
-      Notice.countDocuments({ status: 'published', $or: [{ targetAudience: 'allFarmers' }, { targetDistrict: pattern }] }),
+      Notice.countDocuments({ status: 'published', $and: [{ $or: [{ targetAudience: 'allFarmers' }, { targetDistrict: pattern }] }, liveNoticeFilter()] }),
       ReportedListing.countDocuments({ product: { $in: products }, status: { $in: ['pending', 'inReview'] } }),
     ]);
     const result = trade[0] ?? { totals: [], quantities: [], categories: [], crops: [] };

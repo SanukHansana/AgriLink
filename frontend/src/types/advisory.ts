@@ -100,7 +100,9 @@ export type AdvisoryNotice = {
   targetDistrict?: string;
   languages: ('en' | 'si' | 'ta')[];
   isEmergency: boolean;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'scheduled' | 'published' | 'archived';
+  scheduledPublishAt?: string;
+  expiresAt?: string;
   publishedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -111,6 +113,8 @@ export type AdvisoryNoticeInput = Pick<
   'type' | 'title' | 'description' | 'targetAudience' | 'languages' | 'isEmergency'
 > & {
   targetDistrict?: string;
+  scheduledPublishAt?: string;
+  expiresAt?: string;
 };
 
 export type QualityGuideline = {

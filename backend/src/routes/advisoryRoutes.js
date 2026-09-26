@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { officerDistrict } from '../services/officer-access.js';
 import { getFieldVisits, changeFieldVisit } from '../controllers/advisory/fieldVisitController.js';
 
 import {
@@ -64,6 +65,13 @@ router
   .get(requireOfficer, getOfficerProfile)
   .patch(requireOfficer, updateOfficerProfile)
   .delete(requireOfficer, deleteOfficerProfile);
+
+router.use((request, response, next) => {
+  try {
+    if (request.user.role === 'agricultureOfficer') officerDistrict(request.user);
+    next();
+  } catch (error) { next(error); }
+});
 
 router
   .route('/requests')

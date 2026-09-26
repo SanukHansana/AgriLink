@@ -148,3 +148,28 @@ is killed. Open the app to resume and check sharing status. No location history 
 
 Restart backend and Expo. Rebuild native apps for the new modules/permissions. Run
 `npm test` in both backend and frontend for workflow and offline-queue checks.
+
+## Agriculture officer workflows
+
+Administrators must verify each officer and assign a service district in Admin →
+Users, including existing verified accounts. Officers handle assistance requests
+and reported listings within that district. Claiming a case locks it to the officer;
+Admin → Officer case assignments can reassign open cases to another verified
+officer in the same district. Internal review notes remain hidden from farmers.
+
+Farmers need a saved farm profile before submitting Agriculture Assistance requests.
+They can attach document links, read replies, edit pending/revision requests and
+withdraw pending requests. Officers can schedule, reschedule or cancel field visits,
+record findings, arrange follow-up visits and close completed cases.
+
+Agriculture Updates shows farmers published notices, quality guidelines and surplus
+advice. Assistance replies and visit changes send in-app notifications. Notices can
+be scheduled and given an expiry using ISO dates with a timezone offset, for example
+`2026-10-18T09:30:00+05:30`. The backend notice worker runs every 30 seconds while
+the server is running, publishes due notices and sends district-targeted alerts with
+deduplicated retries. Expired notices disappear from farmer views immediately.
+
+Officer reports count delivered trades and keep quantities separated by unit.
+Restart the backend and Expo after updating. Automated checks cover access policies,
+date validation, analytics grouping and existing workflows; live MongoDB concurrency
+and on-device/browser interaction still need integration testing.
