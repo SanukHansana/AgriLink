@@ -1,3 +1,4 @@
+import { notify } from '../../services/notifications.js';
 import mongoose from 'mongoose';
 import AssistanceRequest from '../../models/AssistanceRequest.js';
 import { requestScope, assertOfficerOwnsRequest } from '../../services/officer-access.js';
@@ -53,6 +54,7 @@ export async function changeFieldVisit(request, response, next) {
       record.history.push({ action: `visit-${action}`, actor: request.user._id, toStatus: record.status });
       await record.save({ session }); return record;
     });
+    await notify(record.farmer, `Field visit for ${record.title}: ${request.body.action}${date ? ' to ' + date.toISOString() : ''}${followUp ? '. Follow-up: ' + followUp.toISOString() : ''}.`, `visit:${request.params.visitId}:${record.updatedAt.toISOString()}`);
     return response.json({ request: record });
   } catch (error) { return next(error); }
 }
