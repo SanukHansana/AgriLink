@@ -7,7 +7,9 @@
     "create-admin": "node scripts/create-admin.js",
     "test": "node --test tests/*.test.js",
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test:watch": "node --test --watch tests/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage tests/*.test.js"
   },
   "keywords": [],
   "author": "",
