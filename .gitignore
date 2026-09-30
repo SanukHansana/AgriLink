@@ -14,5 +14,6 @@ frontend/expo-env.d.ts
 
 # Local tooling and operating-system files
 *.tsbuildinfo
+**/coverage/
 .DS_Store
 
