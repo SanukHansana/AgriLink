@@ -1,4 +1,5 @@
 import Bid, { BID_STATUSES } from '../../models/Bid.js';
+import { notifyOutbidBuyers } from '../../services/buyer-subscriptions.js';
 import Product from '../../models/Product.js';
 import { isPositiveNumber, isValidMongoId } from '../../utils/validation.js';
 import { parseValidDate } from '../../utils/validation.js';
@@ -48,6 +49,7 @@ export async function createBid(request, response, next) {
     });
 
     await notify(product.farmer, `New bid on ${product.name}: ${bidAmount} per ${product.unit}, ${quantity} ${product.unit}.`, `new-bid:${bid._id}`);
+    await notifyOutbidBuyers(bid);
     return response.status(201).json({
       message: 'Bid placed successfully',
       bid,

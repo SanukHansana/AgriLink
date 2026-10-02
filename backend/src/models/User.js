@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema(
     },
     isVerified: { type: Boolean, default: false },
     officerDistrict: { type: String, trim: true, maxlength: 80 },
+    buyerSubscription: {
+      provider: { type: String, enum: ['mock'] },
+      status: { type: String, enum: ['active', 'cancelled'] },
+      expiresAt: Date,
+    },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     verifiedAt: Date,
   },
