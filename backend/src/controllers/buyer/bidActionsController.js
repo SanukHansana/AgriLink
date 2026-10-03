@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { notifyOutbidBuyers } from '../../services/buyer-subscriptions.js';
 import Bid from '../../models/Bid.js';
 import Product from '../../models/Product.js';
 import { acceptBid, validateBid, fail } from '../../services/bidding.js';
@@ -18,6 +19,7 @@ export async function changeBuyerBid(request, response, next) {
       const result = await acceptBid(bidId, product.farmer, { counter: true, buyerId: request.user._id });
       return response.json({ bid: await Bid.findById(bidId), order: result.order });
     }
+    let raisedPrice = false;
     const bid = await mongoose.connection.transaction(async (session) => {
       const bid = await Bid.findOne({ _id: bidId, buyer: request.user._id, status: { $in: ['active', 'countered'] } }).session(session);
       if (!bid) fail('Editable bid not found', 409);
@@ -28,11 +30,13 @@ export async function changeBuyerBid(request, response, next) {
       } else {
         const product = await Product.findById(bid.product).session(session);
         validateBid(product, bidAmount, quantity);
+        raisedPrice = bidAmount > bid.bidAmount;
         bid.bidAmount = bidAmount; bid.quantity = quantity; bid.status = 'active'; bid.counterAmount = undefined;
       }
       await bid.save({ session });
       return bid;
     });
+    if (action === 'edit' && raisedPrice) await notifyOutbidBuyers(bid);
     return response.json({ bid });
   } catch (error) { return next(error); }
 }

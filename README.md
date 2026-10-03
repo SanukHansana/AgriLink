@@ -173,3 +173,29 @@ Officer reports count delivered trades and keep quantities separated by unit.
 Restart the backend and Expo after updating. Automated checks cover access policies,
 date validation, analytics grouping and existing workflows; live MongoDB concurrency
 and on-device/browser interaction still need integration testing.
+
+## Buyer subscriptions and outbid alerts
+
+Buyer Home → Outbid alerts opens a mock subscription interface. Activation grants
+30 days of alerts without charging money; repeated activation keeps the existing
+expiry, cancellation stops eligibility immediately, and there is no automatic
+renewal. Dates and entitlement are controlled by the backend.
+
+New bids and price increases notify subscribed, active buyers with lower active
+bids on the same listing and unit. Equal prices, own bids, withdrawn/closed bids
+and expired subscriptions do not qualify. Farmer counter-offers are separate from
+competing buyer prices. Alerts are deduplicated per triggering bid revision.
+Notifications appear through the existing app inbox and its 15-second foreground
+polling. Delivery is best effort; this version does not send background push alerts.
+
+No API keys are needed for the mock flow. It is automatically disabled when
+`NODE_ENV=production`; set `MOCK_SUBSCRIPTIONS_ENABLED=false` to disable activation
+in development too. Real Stripe payments are not implemented: they require a
+server-side secret key, subscription price and verified webhook configuration.
+Never put a Stripe secret key in `frontend/.env` or commit it. Expo background push
+would additionally need push-token registration, notification permissions, native
+push credentials and a development/production build.
+
+Run `npm test` in backend and frontend for subscription and notification tests.
+Restart both servers after updating. Test actual bid competition with two buyer
+accounts against your development MongoDB before deploying.

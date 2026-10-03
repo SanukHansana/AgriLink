@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getSubscription, changeSubscription } from '../controllers/buyer/subscriptionController.js';
 import { changeBuyerBid } from '../controllers/buyer/bidActionsController.js';
 import { getOrderDelivery } from '../controllers/driver/locationController.js';
 
@@ -41,6 +42,8 @@ import { requireRole } from '../middleware/roleMiddleware.js';
 const router = Router();
 
 router.use(requireAuth, requireRole('buyer'));
+router.get('/subscription', getSubscription);
+router.patch('/subscription', changeSubscription);
 
 router
   .route('/profile')
