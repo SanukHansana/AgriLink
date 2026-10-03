@@ -20,12 +20,17 @@ test('outbid entitlement excludes expired, cancelled, inactive and nonbuyer acco
 test('outbid fanout filters lower active bids and subscribed buyers with stable event keys', async (t) => {
   t.mock.method(Product, 'findById', async () => ({ name: 'Rice', status: 'active', biddingClosesAt: new Date(Date.now() + 86400000) }));
   t.mock.method(Bid, 'find', (filter) => {
+    if (filter.bidAmount.$gte) {
+      assert.equal(filter.bidAmount.$gte, 150);
+      return { distinct: async () => ['still-leading'] };
+    }
     assert.equal(filter.buyer.$ne, 'new-buyer'); assert.deepEqual(filter.bidAmount, { $lt: 150 });
     assert.equal(filter.status, 'active'); assert.equal(filter.unit, 'kg');
     return { distinct: async () => ['subscribed', 'free'] };
   });
   t.mock.method(User, 'find', async (filter) => {
     assert.equal(filter['buyerSubscription.status'], 'active');
+    assert.deepEqual(filter._id.$nin, ['still-leading']);
     assert.ok(filter['buyerSubscription.expiresAt'].$gt instanceof Date);
     return [{ _id: 'subscribed', role: 'buyer', buyerSubscription: { status: 'active', expiresAt: new Date(Date.now() + 86400000) } }, { _id: 'free', role: 'buyer' }];
   });

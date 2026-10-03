@@ -66,6 +66,7 @@ export default function BuyerTabsLayout() {
       />
       <Tabs.Screen name="bid" options={{ href: null }} />
       <Tabs.Screen name="bids" options={{ href: null }} />
+      <Tabs.Screen name="subscription" options={{ href: null }} />
       <Tabs.Screen name="checkout" options={{ href: null }} />
       <Tabs.Screen name="tracking" options={{ href: null }} />
       <Tabs.Screen name="feedback" options={{ href: null }} />

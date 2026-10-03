@@ -20,7 +20,11 @@ export async function notifyOutbidBuyers(bid) {
     const buyers = await Bid.find({ product: bid.product, buyer: { $ne: bid.buyer },
       status: 'active', unit: bid.unit, bidAmount: { $lt: bid.bidAmount } }).distinct('buyer');
     if (!buyers.length) return;
-    const subscribers = await User.find({ _id: { $in: buyers }, role: 'buyer', isActive: true,
+    // A buyer can have multiple bids: a lower old bid must not trigger an alert
+    // if that buyer still has an equal or higher active offer.
+    const protectedBuyers = await Bid.find({ product: bid.product, status: 'active',
+      unit: bid.unit, bidAmount: { $gte: bid.bidAmount } }).distinct('buyer');
+    const subscribers = await User.find({ _id: { $in: buyers, $nin: protectedBuyers }, role: 'buyer', isActive: true,
       'buyerSubscription.status': 'active', 'buyerSubscription.expiresAt': { $gt: new Date() } });
     for (const user of subscribers) {
       if (!hasOutbidSubscription(user)) continue;
