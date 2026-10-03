@@ -21,10 +21,11 @@ export default function FarmerEditProductScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!productId) { setError('Product ID is missing.'); setIsLoading(false); return; }
+    if (!productId) return;
     getFarmerProduct(productId).then(setProduct).catch((requestError) => setError(getApiErrorMessage(requestError))).finally(() => setIsLoading(false));
   }, [productId]);
 
+  if (!productId) return <FarmerState error="Product ID is missing." />;
   if (isLoading || !product) return <FarmerState error={error} isLoading={isLoading} />;
 
   const submit = async (input: FarmerProductInput) => {

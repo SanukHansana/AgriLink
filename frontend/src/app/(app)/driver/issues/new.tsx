@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -27,7 +27,8 @@ export default function DriverReportIssueScreen() {
   const requestedJobId = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
   const jobsState = useDriverJobs('mine');
   const eligibleJobs = jobsState.jobs.filter((job) => job.status !== 'available');
-  const [selectedJobId, setSelectedJobId] = useState(requestedJobId ?? '');
+  const [chosenJobId, setSelectedJobId] = useState(requestedJobId ?? '');
+  const selectedJobId = chosenJobId || eligibleJobs[0]?._id || '';
   const [issueType, setIssueType] = useState<DeliveryIssueType>('delay');
   const [description, setDescription] = useState('');
   const [photoData, setPhotoData] = useState('');
@@ -35,10 +36,6 @@ export default function DriverReportIssueScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedIssue, setSubmittedIssue] = useState<DeliveryIssue | null>(null);
-
-  useEffect(() => {
-    if (!selectedJobId && eligibleJobs[0]) setSelectedJobId(eligibleJobs[0]._id);
-  }, [eligibleJobs, selectedJobId]);
 
   if (jobsState.isLoading && eligibleJobs.length === 0) return <DriverDataState isLoading />;
   if (jobsState.error && eligibleJobs.length === 0) {

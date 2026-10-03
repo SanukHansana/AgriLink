@@ -2,6 +2,30 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+## Expo SDK upgrades
+
+Use Node.js 22.13 or newer for SDK 57. Run upgrade commands from this `frontend` directory, with Metro stopped:
+
+```bash
+npx expo install 'expo@^57.0.24' --fix
+npx expo-doctor
+npx tsc --noEmit
+npm run lint
+npx expo export --platform all
+npx expo start --clear
+```
+
+Changing only the `expo` version is insufficient: React, React Native, Expo Router, and native modules need matching versions. Commit both `package.json` and `package-lock.json`. Follow the [Expo upgrade guide](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/) and check each intervening SDK's release notes when upgrading across multiple versions.
+
+The SDK 54 to 57 migration also requires application changes:
+
+- Import navigation themes from `expo-router/react-navigation` instead of `@react-navigation/native`.
+- Use `NativeTabs.Trigger.Icon` and `NativeTabs.Trigger.Label` for native tab icons and labels.
+- Replace the removed `StyleSheet.absoluteFillObject` with `StyleSheet.absoluteFill`, and handle the new `unspecified` color scheme as the light theme.
+- Adapt synchronous state updates in effects to derived defaults or guarded form resets, as required by the updated React Hooks lint rules.
+
+Use an Expo Go release compatible with SDK 57, or rebuild your development client after upgrading. SDK 57 supports iOS 16.4 and newer. Local native builds require Xcode 26.4 or newer. When building with Xcode 27, SDK 57 additionally needs the `expo-build-properties` scene-support configuration described in [Expo's iOS scene lifecycle guide](https://github.com/expo/fyi/blob/main/ios-scene-lifecycle.md#staying-on-sdk-57-with-xcode-27); this applies to building your own iOS binary, not running JavaScript in Expo Go.
+
 ## Get started
 
 1. Install dependencies

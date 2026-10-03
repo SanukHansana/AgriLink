@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -53,7 +53,13 @@ export default function BuyerProfileScreen() {
     [profile],
   );
 
-  useEffect(() => {
+  const [previousProfile, setPreviousProfile] = useState(profile);
+  const [wasProfileLoading, setWasProfileLoading] = useState(isProfileLoading);
+
+  // Reset form fields only when the server profile or loading state changes.
+  if (previousProfile !== profile || wasProfileLoading !== isProfileLoading) {
+    setPreviousProfile(profile);
+    setWasProfileLoading(isProfileLoading);
     if (profile) {
       setBuyerType(profile.buyerType);
       setBusinessName(profile.businessName ?? '');
@@ -62,13 +68,10 @@ export default function BuyerProfileScreen() {
       setCity(primaryLocation?.city ?? '');
       setDistrict(primaryLocation?.district ?? '');
       setPostalCode(primaryLocation?.postalCode ?? '');
-      return;
-    }
-
-    if (!isProfileLoading) {
+    } else if (!isProfileLoading) {
       setIsEditing(true);
     }
-  }, [isProfileLoading, primaryLocation, profile]);
+  }
 
   if (!user) {
     return null;
