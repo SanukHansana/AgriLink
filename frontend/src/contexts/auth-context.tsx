@@ -5,14 +5,16 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 
 import { loginUser, registerUser } from '@/services/auth-service';
 import { api, setApiToken } from '@/services/api';
 import type { AuthUser, LoginInput, RegisterInput } from '@/types/auth';
-import { readSession, writeSession } from '@/services/session-store';
-import { setOfflineOwner, networkFailure } from '@/services/offline-driver';
+import { writeSession } from '@/services/session-store';
+import { setOfflineOwner } from '@/services/offline-driver';
 import { stopBackgroundSharing } from '@/services/background-location';
 
 type AuthContextValue = {
@@ -32,28 +34,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
+  const sessionGeneration = useRef(0);
 
   useEffect(() => {
     let active = true;
-    const restore = async () => {
+    const resetSession = async () => {
+      sessionGeneration.current += 1;
+      setApiToken(null);
+      setOfflineOwner(null);
       try {
-        const saved = await readSession();
-        if (!saved || !active) return;
-        setApiToken(saved.token); setOfflineOwner(saved.user.id);
-        try { const response = await api.get<{ user: AuthUser }>('/auth/me'); if (active) setUser(response.data.user); }
-        catch (cause) {
-          if (networkFailure(cause)) { if (active) setUser(saved.user); }
-          else { setApiToken(null); setOfflineOwner(null); await writeSession(null); await stopBackgroundSharing(); }
-        }
-      } catch { setApiToken(null); setOfflineOwner(null); }
+        await writeSession(null);
+      } catch { /* Login remains required if clearing old storage fails. */ }
+      if (active) setUser(null);
+      try { await stopBackgroundSharing(); } catch { /* Session reset still completes. */ }
       finally { if (active) setIsRestoring(false); }
     };
-    void restore(); return () => { active = false; };
+    void resetSession(); return () => { active = false; };
   }, []);
 
-  const applyAuthResponse = useCallback(async (token: string, authenticatedUser: AuthUser) => {
+  const applyAuthResponse = useCallback(async (token: string, authenticatedUser: AuthUser, generation: number) => {
     await stopBackgroundSharing();
-    await writeSession({ token, user: authenticatedUser }).catch(() => {});
+    if (generation !== sessionGeneration.current) return;
     setApiToken(token);
     setOfflineOwner(authenticatedUser.id);
     setUser(authenticatedUser);
@@ -62,9 +63,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const login = useCallback(
     async (input: LoginInput) => {
       setIsLoading(true);
+      const generation = sessionGeneration.current;
       try {
         const response = await loginUser(input);
-        await applyAuthResponse(response.token, response.user);
+        if (generation === sessionGeneration.current) await applyAuthResponse(response.token, response.user, generation);
       } finally {
         setIsLoading(false);
       }
@@ -75,9 +77,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const register = useCallback(
     async (input: RegisterInput) => {
       setIsLoading(true);
+      const generation = sessionGeneration.current;
       try {
         const response = await registerUser(input);
-        await applyAuthResponse(response.token, response.user);
+        if (generation === sessionGeneration.current) await applyAuthResponse(response.token, response.user, generation);
       } finally {
         setIsLoading(false);
       }
@@ -86,16 +89,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
   );
 
   const logout = useCallback(async () => {
+    sessionGeneration.current += 1;
     setApiToken(null);
     setOfflineOwner(null);
     setUser(null);
-    await writeSession(null);
-    await stopBackgroundSharing();
+    await writeSession(null).catch(() => {});
+    await stopBackgroundSharing().catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'background') void logout();
+    });
+    return () => subscription.remove();
+  }, [logout]);
+
   const refreshUser = useCallback(async () => {
+    const generation = sessionGeneration.current;
     const response = await api.get<{ user: AuthUser }>('/auth/me');
-    setUser(response.data.user);
+    if (generation === sessionGeneration.current) setUser(response.data.user);
   }, []);
 
   const value = useMemo(
