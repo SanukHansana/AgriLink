@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from '@/services/image-picker';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Image,
@@ -97,6 +97,7 @@ export default function DriverUpdateStatusScreen() {
 
   const chooseProofPhoto = async () => {
     setSubmitError(null);
+    try {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setSubmitError('Photo access is required to attach proof of delivery.');
@@ -126,6 +127,7 @@ export default function DriverUpdateStatusScreen() {
     }
     setPhotoData(encodedPhoto);
     setPhotoUri(asset.uri);
+    } catch (cause) { setSubmitError(cause instanceof Error ? cause.message : 'Unable to load photo. Try another image.'); }
   };
 
   const submitStatus = async () => {

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Button, ScrollView, Text } from 'react-native';
+import { ScrollView, Text } from 'react-native';
+import { Button } from '@/components/button';
 import { RequestForm } from '@/components/advisory/request-form';
 export default function NewAssistance() {
   const router = useRouter();

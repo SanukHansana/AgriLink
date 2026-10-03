@@ -1,3 +1,4 @@
+import { DateTimeField } from '@/components/date-time-field';
 import { VehicleControls } from '@/components/driver/vehicle-controls';
 import { useState } from 'react';
 import {
@@ -177,7 +178,7 @@ export default function DriverProfileScreen() {
                 placeholder="B1234567"
                 value={licenseNumber}
               />
-              <FormField
+              <DateTimeField
                 label="Licence expiry date"
                 onChangeText={setLicenseExpiryDate}
                 placeholder="YYYY-MM-DD"

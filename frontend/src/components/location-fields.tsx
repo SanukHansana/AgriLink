@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import { useState } from 'react';
-import { Button, Linking, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { FormField } from '@/components/auth/form-field';
 
 export type MapPin = { latitude?: number; longitude?: number };

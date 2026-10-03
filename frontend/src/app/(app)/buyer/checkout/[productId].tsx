@@ -1,3 +1,4 @@
+import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -159,7 +160,7 @@ export default function BuyerCheckoutScreen() {
             <>
               <Text style={styles.sectionLabel}>REQUESTED DELIVERY DATE</Text>
               <View style={styles.formCard}>
-                <FormField
+                <DateTimeField
                   autoCapitalize="none"
                   label="Delivery date"
                   onChangeText={setRequestedDeliveryDate}

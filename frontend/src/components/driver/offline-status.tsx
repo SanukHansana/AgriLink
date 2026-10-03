@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, Button, Text, View } from 'react-native';
+import { AppState, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { pendingUpdates, reviewPending, syncDriverUpdates, usedOfflineCache, type PendingUpdate } from '@/services/offline-driver';
 import { backgroundSharingJob, stopBackgroundSharing } from '@/services/background-location';
 import { useAuth } from '@/contexts/auth-context';

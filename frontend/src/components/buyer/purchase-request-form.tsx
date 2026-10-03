@@ -1,3 +1,4 @@
+import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -66,7 +67,7 @@ export function PurchaseRequestForm({
       <ChoiceSection label="Category">{categories.map((item) => <Choice active={category === item} key={item} label={capitalize(item)} onPress={() => setCategory(item)} />)}</ChoiceSection>
       <View style={styles.row}><View style={styles.flex}><FormField keyboardType="numeric" label="Quantity" onChangeText={setQuantity} placeholder="500" value={quantity} /></View><View style={styles.flex}><ChoiceSection label="Unit">{units.map((item) => <Choice active={unit === item} key={item} label={item} onPress={() => setUnit(item)} />)}</ChoiceSection></View></View>
       <FormField keyboardType="numeric" label="Maximum price per unit (LKR)" onChangeText={setMaximumUnitPrice} placeholder="225" value={maximumUnitPrice} />
-      <FormField label="Needed by" onChangeText={setRequiredBy} placeholder="YYYY-MM-DD" value={requiredBy} />
+      <DateTimeField label="Needed by" onChangeText={setRequiredBy} placeholder="YYYY-MM-DD" value={requiredBy} />
       <Text style={styles.sectionTitle}>Delivery location</Text>
       <View style={styles.row}><View style={styles.flex}><FormField autoCapitalize="words" label="City" onChangeText={setCity} placeholder="Kandy" value={city} /></View><View style={styles.flex}><FormField autoCapitalize="words" label="District" onChangeText={setDistrict} placeholder="Kandy" value={district} /></View></View>
       <Text style={styles.label}>Quality requirements</Text>

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { Button, Linking, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { api, getApiErrorMessage } from '@/services/api';
 import { mapUrl } from '@/components/location-fields';
 import type { DeliveryJob } from '@/types/logistics';

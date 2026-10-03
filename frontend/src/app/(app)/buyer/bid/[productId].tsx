@@ -1,3 +1,4 @@
+import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -74,7 +75,7 @@ export default function PlaceBidScreen() {
     }
     const requestedDate = deliveryDate ? new Date(deliveryDate) : null;
     if (product.listingType === 'future' && (!/^\d{4}-\d{2}-\d{2}$/.test(deliveryDate) || !requestedDate || Number.isNaN(requestedDate.getTime()) || (product.harvestDate && requestedDate < new Date(product.harvestDate)))) {
-      setSubmitError('Enter a delivery date on or after the harvest date (YYYY-MM-DD).'); return;
+      setSubmitError('Enter a delivery date on or after the harvest date.'); return;
     }
 
     setIsSubmitting(true);
@@ -163,7 +164,7 @@ export default function PlaceBidScreen() {
             <FormField label="City" value={city} onChangeText={setCity} maxLength={80} placeholder="Delivery city" />
             <FormField label="District" value={district} onChangeText={setDistrict} maxLength={80} placeholder="Delivery district" />
             <LocationFields value={pin} onChange={setPin} />
-            {product.listingType === 'future' && <FormField label="Requested delivery date (YYYY-MM-DD)" value={deliveryDate} onChangeText={setDeliveryDate} placeholder="YYYY-MM-DD" maxLength={10} />}
+            {product.listingType === 'future' && <DateTimeField label="Requested delivery date" value={deliveryDate} onChangeText={setDeliveryDate} placeholder="YYYY-MM-DD" maxLength={10} />}
           </View>
 
           <View style={styles.totalCard}>

@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
-import { AppState, Button, Linking, Platform, Text, View } from 'react-native';
+import { AppState, Linking, Platform, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { startBackgroundSharing, stopBackgroundSharing } from '@/services/background-location';
 import { operationId, sendDriverUpdate } from '@/services/offline-driver';
 import { StopOutcome } from './stop-outcome';

@@ -1,6 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useState } from 'react';
-import { Button, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { getApiErrorMessage } from '@/services/api';
 
 import { OfficerTabIcon } from '@/components/advisory/officer-tab-icon';

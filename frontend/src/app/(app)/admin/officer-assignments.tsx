@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { api, getApiErrorMessage } from '@/services/api';
 
 type Officer = { _id: string; name: string; officerDistrict?: string };

@@ -1,5 +1,7 @@
+import { SelectField } from '@/components/select-field';
+import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from '@/services/image-picker';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FormField } from '@/components/auth/form-field';
@@ -46,13 +48,14 @@ export function ProductForm({
   const [pricingMode, setPricingMode] = useState<PricingMode>(initialProduct?.pricingMode ?? 'fixedPrice');
   const [fixedPrice, setFixedPrice] = useState(initialProduct?.fixedPrice ? String(initialProduct.fixedPrice) : '');
   const [minimumBidPrice, setMinimumBidPrice] = useState(initialProduct?.minimumBidPrice ? String(initialProduct.minimumBidPrice) : '');
-  const [biddingClosesAt, setBiddingClosesAt] = useState(initialProduct?.biddingClosesAt?.slice(0, 10) ?? '');
+  const [biddingClosesAt, setBiddingClosesAt] = useState(initialProduct?.biddingClosesAt ?? '');
   const [imageData, setImageData] = useState(initialProduct?.images[0] ?? '');
   const [imageUri, setImageUri] = useState(initialProduct?.images[0] ?? '');
   const [localError, setLocalError] = useState<string | null>(null);
 
   const chooseImage = async () => {
     setLocalError(null);
+    try {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setLocalError('Photo access is required to select a product image.');
@@ -73,6 +76,7 @@ export function ProductForm({
     }
     setImageData(encoded);
     setImageUri(asset.uri);
+    } catch (cause) { setLocalError(cause instanceof Error ? cause.message : 'Unable to load image. Try another photo.'); }
   };
 
   const submit = () => {
@@ -92,7 +96,7 @@ export function ProductForm({
       setLocalError('Enter a valid fixed price.');
       return;
     }
-    if (['bidding', 'both'].includes(pricingMode) && (!Number.isFinite(parsedMinimumBid) || parsedMinimumBid <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(biddingClosesAt))) {
+    if (['bidding', 'both'].includes(pricingMode) && (!Number.isFinite(parsedMinimumBid) || parsedMinimumBid <= 0 || !biddingClosesAt.trim() || !Number.isFinite(new Date(biddingClosesAt).getTime()))) {
       setLocalError('Enter a valid minimum bid and bidding close date.');
       return;
     }
@@ -117,14 +121,14 @@ export function ProductForm({
       </Pressable>
       <FormField autoCapitalize="words" label="Product Name" onChangeText={setName} placeholder="e.g. Keeri Samba Rice" value={name} />
       <ChoiceSection label="Category">{categories.map((item) => <Choice key={item} active={category === item} label={capitalize(item)} onPress={() => setCategory(item)} />)}</ChoiceSection>
-      <ChoiceSection label="Listing Type"><Choice active={listingType === 'current'} label="Current Product" onPress={() => setListingType('current')} /><Choice active={listingType === 'future'} label="Future Harvest" onPress={() => setListingType('future')} /></ChoiceSection>
-      {listingType === 'future' ? <FormField label="Expected Harvest Date" onChangeText={setHarvestDate} placeholder="YYYY-MM-DD" value={harvestDate} /> : null}
+      <SelectField label="Listing Type" value={listingType} options={[{ label: 'Current Product', value: 'current' }, { label: 'Future Harvest', value: 'future' }]} onChange={setListingType} />
+      {listingType === 'future' ? <DateTimeField label="Expected Harvest Date" onChangeText={setHarvestDate} placeholder="YYYY-MM-DD" value={harvestDate} /> : null}
       <View style={styles.row}><View style={styles.flex}><FormField keyboardType="numeric" label="Available Quantity" onChangeText={setQuantity} placeholder="500" value={quantity} /></View><View style={styles.flex}><Text style={styles.label}>Unit</Text><View style={styles.unitRow}>{units.map((item) => <Choice key={item} active={unit === item} label={item} onPress={() => setUnit(item)} />)}</View></View></View>
       <FormField keyboardType="numeric" label="Minimum Order Quantity" onChangeText={setMinimumOrder} placeholder="10" value={minimumOrder} />
       <FormField autoCapitalize="words" label="Quality / Grade" onChangeText={setQualityGrade} placeholder="Grade A, Organic, C5 Extra..." value={qualityGrade} />
       <ChoiceSection label="Selling Option">{pricingModes.map((item) => <Choice key={item.value} active={pricingMode === item.value} label={item.label} onPress={() => setPricingMode(item.value)} />)}</ChoiceSection>
       {['fixedPrice', 'both'].includes(pricingMode) ? <FormField keyboardType="numeric" label="Fixed Price per Unit (LKR)" onChangeText={setFixedPrice} placeholder="225" value={fixedPrice} /> : null}
-      {['bidding', 'both'].includes(pricingMode) ? <><FormField keyboardType="numeric" label="Minimum Bid per Unit (LKR)" onChangeText={setMinimumBidPrice} placeholder="195" value={minimumBidPrice} /><FormField label="Bidding Closing Date" onChangeText={setBiddingClosesAt} placeholder="YYYY-MM-DD" value={biddingClosesAt} /></> : null}
+      {['bidding', 'both'].includes(pricingMode) ? <><FormField keyboardType="numeric" label="Minimum Bid per Unit (LKR)" onChangeText={setMinimumBidPrice} placeholder="195" value={minimumBidPrice} /><DateTimeField mode="datetime" label="Bidding closing date and time" onChangeText={setBiddingClosesAt} value={biddingClosesAt} /></> : null}
       <Text style={styles.sectionTitle}>Farm Location</Text>
       <FormField autoCapitalize="words" label="Address" onChangeText={setAddressLine} placeholder="Farm road or field" value={addressLine} />
       <View style={styles.row}><View style={styles.flex}><FormField autoCapitalize="words" label="City" onChangeText={setCity} placeholder="Kandy" value={city} /></View><View style={styles.flex}><FormField autoCapitalize="words" label="District" onChangeText={setDistrict} placeholder="Kandy" value={district} /></View></View>

@@ -1,6 +1,8 @@
+import { DateTimeField } from '@/components/date-time-field';
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, Linking, Pressable, RefreshControl, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Button } from '@/components/button';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FormField } from '@/components/auth/form-field';
 import { PrimaryButton } from '@/components/auth/primary-button';
@@ -49,7 +51,7 @@ export default function FarmerPickupScreen() {
       <FormField label="Cargo description" value={cargo} onChangeText={setCargo} />
       <FormField label="Total weight (kg)" keyboardType="decimal-pad" value={weight} onChangeText={setWeight} />
       <FormField label="Driver payout (LKR)" keyboardType="decimal-pad" value={payout} onChangeText={setPayout} />
-      <FormField label="Pickup date and time" placeholder="2026-10-20T08:00:00+05:30" value={pickupAt} onChangeText={setPickupAt} />
+      <DateTimeField mode="datetime" label="Pickup date and time" placeholder="2026-10-20T08:00:00+05:30" value={pickupAt} onChangeText={setPickupAt} />
       <Text>Pickup must be in the future, after harvest, and no later than the requested delivery date.</Text>
       {error && <Text style={styles.error}>{error}</Text>}<PrimaryButton label={selected.length > 1 ? 'Request shared pickup' : 'Request pickup'} loading={saving} onPress={submit} />
     </View>

@@ -1,3 +1,5 @@
+import { DateTimeField } from '@/components/date-time-field';
+import { SelectField } from '@/components/select-field';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -90,10 +92,7 @@ export default function OfficerResponseScreen() {
           <Text style={styles.respondingText}>{assistanceRequest.farmer.name} · {assistanceRequest.title}</Text>
         </View>
 
-        <Text style={styles.label}>Response Type</Text>
-        <View style={styles.options}>
-          {responseOptions.map((option) => <Pressable key={option.value} onPress={() => selectType(option.value)} style={[styles.option, type === option.value && styles.selectedOption]}><Text style={[styles.optionText, type === option.value && styles.selectedOptionText]}>{option.label}</Text></Pressable>)}
-        </View>
+        <SelectField label="Response Type" value={type} options={responseOptions} onChange={selectType} />
 
         <View style={styles.labelRow}><Text style={styles.label}>Official Message Body</Text><Pressable onPress={() => setMessage(templateFor(type, assistanceRequest.farmer.name, assistanceRequest.title))}><Text style={styles.templateLink}>Use Template</Text></Pressable></View>
         <TextInput multiline onChangeText={setMessage} placeholder="Write the official response..." placeholderTextColor="#A1A4A1" style={styles.messageInput} textAlignVertical="top" value={message} />
@@ -101,7 +100,7 @@ export default function OfficerResponseScreen() {
         {type === 'approvedAndScheduled' ? (
           <View style={styles.visitCard}>
             <Text style={styles.visitTitle}>Schedule Farm Visit</Text>
-            <TextInput autoCapitalize="none" onChangeText={setScheduledVisitAt} placeholder="2026-10-18T09:30:00+05:30" placeholderTextColor="#999C99" style={styles.dateInput} value={scheduledVisitAt} />
+            <DateTimeField label="Farm visit date and time" mode="datetime" value={scheduledVisitAt} onChangeText={setScheduledVisitAt} />
             <Text style={styles.visitHint}>Enter the local visit date and time.</Text>
           </View>
         ) : null}

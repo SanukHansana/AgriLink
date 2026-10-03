@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { RequestForm } from '@/components/advisory/request-form';
 import { DocumentLink } from '@/components/advisory/document-link';
 import { api, getApiErrorMessage } from '@/services/api';

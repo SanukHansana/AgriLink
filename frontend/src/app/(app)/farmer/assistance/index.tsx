@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, Pressable, ScrollView, Text } from 'react-native';
+import { Pressable, ScrollView, Text } from 'react-native';
+import { Button } from '@/components/button';
 import { api, getApiErrorMessage } from '@/services/api';
 import type { AssistanceRequest } from '@/types/advisory';
 

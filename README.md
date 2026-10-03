@@ -138,8 +138,9 @@ and replayed in order under the same account with stable operation IDs. Server c
 remain in Review & sync updates until reviewed, retried or discarded. Cancellation,
 reassignment and payments require connectivity. Pending updates are not server-confirmed
 until synchronized. Login sessions stay in memory during app use. Reopening/reloading the app requires
-a fresh login, and moving it into the background logs out; tokens are not stored
-in the offline queue. Logout also stops driver background location sharing.
+a fresh login. Temporary backgrounding, photo selection and permission dialogs
+keep the current session active; tokens are not stored in the offline queue.
+Logout also stops driver background location sharing.
 
 Background GPS is a separate driver opt-in for an active trip, stops on logout, trip
 completion/reassignment, or after 12 hours, and has a persistent Android notification.

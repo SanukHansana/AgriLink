@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, Image, ScrollView, Text, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { FormField } from '@/components/auth/form-field';
 import { api, getApiErrorMessage } from '@/services/api';
 

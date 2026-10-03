@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Linking, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
+import { Button } from '@/components/button';
 import { api, getApiErrorMessage } from '@/services/api';
 import type { DeliveryContactLocation } from '@/types/logistics';
 

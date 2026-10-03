@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from '@/services/image-picker';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -65,6 +65,7 @@ export default function DriverReportIssueScreen() {
 
   const choosePhoto = async () => {
     setError(null);
+    try {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setError('Photo access is required to attach issue evidence.');
@@ -93,6 +94,7 @@ export default function DriverReportIssueScreen() {
     }
     setPhotoData(encodedPhoto);
     setPhotoUri(asset.uri);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to load photo. Try another image.'); }
   };
 
   const submitIssue = async () => {
