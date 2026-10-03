@@ -42,6 +42,15 @@ export default function BuyerHomeScreen() {
           </View>
         </View>
 
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/buyer/subscription')} style={{ padding: 12, backgroundColor: '#e9f2ec', borderRadius: 12 }}>
+            <Text style={{ color: BrandColors.primary, fontWeight: '700' }}>Outbid alerts</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/buyer/bids')} style={{ padding: 12 }}>
+            <Text style={{ color: BrandColors.primary, fontWeight: '700' }}>My Bids</Text>
+          </Pressable>
+        </View>
+
         <Pressable accessibilityRole="button" onPress={() => openSearch()} style={styles.searchBar}>
           <Text style={styles.searchIcon}>⌕</Text>
           <Text style={styles.searchPlaceholder}>Search fresh harvests, spices, tea…</Text>
