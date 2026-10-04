@@ -239,7 +239,7 @@ Restart the backend and Expo after updating the location schemas.
 
 ### Accepted orders, demo payment and delivery
 
-Buyers place an order, then wait for the farmer to confirm it. In **Buyer → Orders**, use **Pay for order (demo)** with `4242 4242 4242 4242`, a future `MM/YY`, and any three-digit code. The backend records a mock payment; no money moves and no card number or security code is sent or stored. Preparation, pickup creation and driver acceptance require a paid order. Mock order payments are disabled when `NODE_ENV=production` or `MOCK_PAYMENTS_ENABLED=false`; real billing is not implemented.
+Buyers place an order, then wait for the farmer to confirm it. In **Buyer → Orders**, use **Pay for order (demo)** with `4242 4242 4242 4242`, a future `MM/YY`, and any three-digit code. The backend records a mock payment; no money moves and no card number or security code is sent or stored. Preparation, pickup creation and driver acceptance require a paid order. Production demos can enable simulated order payments and buyer subscriptions with `SIMULATED_PAYMENTS_ENABLED=true`, while keeping `NODE_ENV=production`. Without that explicit flag, production simulation is disabled. `MOCK_PAYMENTS_ENABLED=false` and `MOCK_SUBSCRIPTIONS_ENABLED=false` individually disable those features even when simulation is enabled. Real billing is not implemented.
 
 After payment, the farmer starts preparing and uses **Ready for Driver Pickup** to select paid orders, set the farm pickup location, cargo weight, driver payout and pickup time. Publishing the pickup atomically marks its orders **dispatched** and makes the delivery job available to drivers. Driver acceptance unlocks the existing Google Maps route with pickup before drop-off. After the driver confirms every pickup, either the driver starts transit or the farmer uses **Mark out for delivery**; both update the same delivery job and orders. After the driver records delivery, the buyer can **Confirm received**, which stores a separate receipt timestamp and notifies the farmer.
 
@@ -265,3 +265,16 @@ Use the compact **EN / SI / TA** dropdown immediately to the left of the notific
 `frontend/src/i18n/translations.ts` contains the bilingual UI phrase catalog. Shared controls in `frontend/src/i18n/native.tsx` render those phrases and accessibility labels; `language.ts` stores the selection and handles system notification templates. Unknown strings fall back to English instead of becoming blank. New screens should use these shared controls and add new phrases to the catalog. Native-speaker review is recommended before release, especially for agricultural terminology and longer instructions.
 
 Registered push devices store the selected language. Outbid and core order/payment phone alerts use that language after the device registers it; push credentials and a native build are still required. Other system or user-written messages can fall back to their original text. Restart the backend after this update to enable the push-language fields.
+
+### Simulated payments on Railway
+
+Set these backend Railway Variables and redeploy:
+
+```env
+NODE_ENV=production
+SIMULATED_PAYMENTS_ENABLED=true
+MOCK_PAYMENTS_ENABLED=true
+MOCK_SUBSCRIPTIONS_ENABLED=true
+```
+
+This enables the existing demo-card checkout for orders and subscriptions in the installed APK. No real card is charged; only demo payment status and subscription entitlement are stored. Demo checkout remains visibly labeled, and full card numbers/security codes are never stored or sent to the backend. To disable production simulation, remove `SIMULATED_PAYMENTS_ENABLED` or set it to `false`.
