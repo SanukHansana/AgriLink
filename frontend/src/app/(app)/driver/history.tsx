@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { type Href, useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DriverDataState } from '@/components/driver/driver-data-state';
@@ -105,7 +106,7 @@ export default function DriverHistoryScreen() {
                 </View>
               </View>
               <Text style={styles.issueJob}>{job?.jobCode ?? 'Delivery job'}</Text>
-              <Text numberOfLines={2} style={styles.issueDescription}>{issue.description}</Text>
+              <Text numberOfLines={2} style={styles.issueDescription} localize={false}>{issue.description}</Text>
             </View>
           );
         })}
@@ -158,7 +159,7 @@ function formatLabel(value: string) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 35 },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   title: { color: BrandColors.primary, fontSize: 21, fontWeight: '800' },
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   reportText: { color: BrandColors.warning, fontSize: 10, fontWeight: '800' },
   issueHeader: { alignItems: 'baseline', flexDirection: 'row', gap: 7 },
   issueCount: { color: BrandColors.primary, fontSize: 10, fontWeight: '800' },
-  issueCard: { backgroundColor: BrandColors.white, borderColor: BrandColors.border, borderRadius: 12, borderWidth: 1, marginTop: 10, padding: 13 },
+  issueCard: { backgroundColor: '#fff', borderColor: BrandColors.border, borderRadius: 12, borderWidth: 1, marginTop: 10, padding: 13 },
   issueTitleRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   issueType: { color: '#444744', fontSize: 12, fontWeight: '800' },
   issueStatus: { backgroundColor: '#FFF3CD', borderRadius: 7, paddingHorizontal: 7, paddingVertical: 4 },

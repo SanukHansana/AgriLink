@@ -1,5 +1,7 @@
-import * as ImagePicker from 'expo-image-picker';
-import { Button, Image, Text, View } from 'react-native';
+import * as ImagePicker from '@/services/image-picker';
+import { Image, View } from 'react-native';
+import { Text } from '@/i18n/native';
+import { Button } from '@/components/button';
 import { useState } from 'react';
 import { FormField } from '@/components/auth/form-field';
 

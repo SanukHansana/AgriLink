@@ -9,7 +9,7 @@ import { validCoordinates } from '../src/utils/validation.js';
 test('pickup requires ready orders, harvest readiness and compatible dates', () => {
   const now = new Date('2026-10-01T00:00:00Z');
   const pickup = new Date('2026-10-03T08:00:00Z');
-  const order = { status: 'preparing', requestedDeliveryDate: '2026-10-03', product: { listingType: 'future', harvestStatus: 'ready', harvestDate: '2026-10-02' } };
+  const order = { status: 'preparing', paymentStatus: 'paid', requestedDeliveryDate: '2026-10-03', product: { listingType: 'future', harvestStatus: 'ready', harvestDate: '2026-10-02' } };
   assert.doesNotThrow(() => validatePickup([order], pickup, now));
   for (const bad of [
     { ...order, status: 'pending' },
@@ -43,7 +43,7 @@ test('delivery creation rejects orders already claimed by another job and legacy
   const id = new mongoose.Types.ObjectId();
   const session = {};
   const input = { orders: [id], pickupPoints: [{ addressLine: 'Farm', city: 'City', district: 'District' }], scheduledPickupAt: new Date(Date.now() + 3600000) };
-  const order = { _id: id, status: 'preparing', product: { listingType: 'current' }, deliveryJob: new mongoose.Types.ObjectId() };
+  const order = { _id: id, status: 'preparing', paymentStatus: 'paid', product: { listingType: 'current' }, deliveryJob: new mongoose.Types.ObjectId() };
   let legacy = false;
   mock.method(mongoose.connection, 'transaction', async (callback) => callback(session));
   mock.method(Order, 'find', (filter) => { assert.equal(filter.seller, 'farmer'); return { populate() { return this; }, session: async (value) => { assert.equal(value, session); return [order]; } }; });

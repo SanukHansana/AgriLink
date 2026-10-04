@@ -1,14 +1,9 @@
+import { SavedDeliveryButton } from '@/components/buyer/saved-delivery-button';
+import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LocationFields, type MapPin } from '@/components/location-fields';
@@ -37,6 +32,7 @@ export default function BuyerCheckoutScreen() {
   const [addressLine, setAddressLine] = useState('');
   const [city, setCity] = useState('');
   const [pin, setPin] = useState<MapPin>({});
+  const [locationRevision, setLocationRevision] = useState(0);
   const [district, setDistrict] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [requestedDeliveryDate, setRequestedDeliveryDate] = useState('');
@@ -159,7 +155,7 @@ export default function BuyerCheckoutScreen() {
             <>
               <Text style={styles.sectionLabel}>REQUESTED DELIVERY DATE</Text>
               <View style={styles.formCard}>
-                <FormField
+                <DateTimeField
                   autoCapitalize="none"
                   label="Delivery date"
                   onChangeText={setRequestedDeliveryDate}
@@ -179,7 +175,7 @@ export default function BuyerCheckoutScreen() {
           <View style={styles.productCard}>
             <ProductImage product={product} style={styles.productImage} />
             <View style={styles.productCopy}>
-              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productName} localize={false}>{product.name}</Text>
               <Text style={styles.seller}>by {getSellerName(product)}</Text>
               <Text style={styles.quantity}>{quantity.toLocaleString('en-LK')} {product.unit}</Text>
             </View>
@@ -215,7 +211,8 @@ export default function BuyerCheckoutScreen() {
                 />
               </View>
             </View>
-            <LocationFields value={pin} onChange={setPin} />
+            <SavedDeliveryButton onSelect={(location) => { setAddressLine(location.addressLine); setCity(location.city); setDistrict(location.district); setPostalCode(location.postalCode ?? ''); setPin({ latitude: location.latitude, longitude: location.longitude }); setLocationRevision((value) => value + 1); }} />
+            <LocationFields key={locationRevision} value={pin} onChange={setPin} />
             <FormField
               keyboardType="number-pad"
               label="Postal code (optional)"
@@ -264,7 +261,7 @@ export default function BuyerCheckoutScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   keyboardView: {
@@ -338,6 +335,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   formCard: {
+    backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 13,
     borderWidth: 1,

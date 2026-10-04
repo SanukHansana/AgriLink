@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BidActions } from '@/components/buyer/bid-actions';
@@ -115,7 +116,7 @@ function BidCard({ bid, onChange }: { bid: BuyerBid; onChange: () => void }) {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   content: {
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   bidList: {
     gap: 12,
   },
-  bidCard: {
+  bidCard: { backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 15,
     borderWidth: 1,

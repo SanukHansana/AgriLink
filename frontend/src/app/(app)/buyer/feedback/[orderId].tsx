@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BuyerDataState } from '@/components/buyer/buyer-data-state';
@@ -291,7 +285,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   card: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 15,
     borderWidth: 1,

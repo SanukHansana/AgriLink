@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { BrandColors } from '@/constants/theme';
 import type { DeliveryJob } from '@/types/logistics';
@@ -71,7 +72,7 @@ export function DeliveryJobCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 16,
     borderWidth: 1,

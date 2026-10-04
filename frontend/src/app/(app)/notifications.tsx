@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '@/i18n/native';
+import { PhoneNotificationSettings } from '@/components/phone-notifications';
+import { Button } from '@/components/button';
 import { api, getApiErrorMessage } from '@/services/api';
 
 type Notice = { _id: string; message: string; createdAt: string; readAt?: string };
@@ -17,6 +20,7 @@ export default function NotificationsScreen() {
   return <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
     <Button title="Back" onPress={() => router.canGoBack() ? router.back() : router.replace('/(app)')} />
     <Text style={{ fontSize: 26, fontWeight: '700', color: '#183d2c' }}>Notifications</Text>
+    <PhoneNotificationSettings />
     {error && <Text style={{ color: '#a33425' }}>{error}</Text>}
     {!items.length && <Text>No notifications yet.</Text>}
     {items.map((item) => <View key={item._id} style={{ padding: 16, borderRadius: 12, backgroundColor: item.readAt ? '#f3f6f3' : '#e5f2e9', gap: 8 }}><Text>{item.message}</Text><Text>{new Date(item.createdAt).toLocaleString()}</Text>{!item.readAt && <Button title="Mark as read" onPress={async () => { try { await api.patch(`/notifications/${item._id}/read`); setItems((current) => current.map((notice) => notice._id === item._id ? { ...notice, readAt: new Date().toISOString() } : notice)); } catch (cause) { setError(getApiErrorMessage(cause)); } }} />}</View>)}

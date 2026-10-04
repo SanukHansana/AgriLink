@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { ProductImage } from '@/components/buyer/product-image';
 import { BrandColors } from '@/constants/theme';
@@ -18,6 +19,8 @@ type ProductCardProps = {
 
 export function ProductCard({ compact = false, onPress, product }: ProductCardProps) {
   const price = getProductPrice(product);
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = !compact && (width < 360 || fontScale >= 1.3);
 
   return (
     <Pressable
@@ -26,16 +29,17 @@ export function ProductCard({ compact = false, onPress, product }: ProductCardPr
       style={({ pressed }) => [
         styles.card,
         compact ? styles.compactCard : styles.listCard,
+        stacked && styles.stackedCard,
         pressed && styles.pressed,
       ]}>
       <ProductImage
         product={product}
-        style={compact ? styles.compactImage : styles.listImage}
+        style={compact ? styles.compactImage : stacked ? styles.stackedImage : styles.listImage}
       />
 
       <View style={[styles.copy, compact && styles.compactCopy]}>
         <View style={styles.titleRow}>
-          <Text numberOfLines={1} style={styles.name}>
+          <Text style={styles.name} localize={false}>
             {product.name}
           </Text>
           {product.listingType === 'future' ? (
@@ -44,7 +48,7 @@ export function ProductCard({ compact = false, onPress, product }: ProductCardPr
             </View>
           ) : null}
         </View>
-        <Text numberOfLines={1} style={styles.seller}>
+        <Text style={styles.seller}>
           {getSellerName(product)} • {product.farmLocation.district}
         </Text>
         <Text style={styles.price}>
@@ -53,6 +57,8 @@ export function ProductCard({ compact = false, onPress, product }: ProductCardPr
             <Text style={styles.unit}>/{formatProductUnit(product.unit)}</Text>
           )}
         </Text>
+        <Text style={styles.availability}>{product.availableQuantity > 0 ? `${product.listingType === 'future' ? 'Expected' : 'Available'}: ${product.availableQuantity.toLocaleString('en-LK')} ${formatProductUnit(product.unit)}` : 'Out of stock'}</Text>
+        {product.listingType === 'future' && product.harvestDate && <Text style={styles.availability}>Harvest: {new Date(product.harvestDate).toLocaleDateString('en-LK')}</Text>}
       </View>
     </Pressable>
   );
@@ -60,7 +66,7 @@ export function ProductCard({ compact = false, onPress, product }: ProductCardPr
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 16,
     borderWidth: 1,
@@ -71,8 +77,13 @@ const styles = StyleSheet.create({
   },
   listCard: {
     flexDirection: 'row',
-    padding: 10,
+    padding: 14,
+    gap: 14,
+    alignItems: 'flex-start',
   },
+  stackedCard: { flexDirection: 'column' },
+  stackedImage: { width: '100%', height: 180, borderRadius: 12 },
+  availability: { color: '#365840', fontSize: 16, lineHeight: 23, fontWeight: '600', marginTop: 8 },
   pressed: {
     opacity: 0.78,
   },
@@ -82,41 +93,49 @@ const styles = StyleSheet.create({
   },
   listImage: {
     borderRadius: 12,
-    height: 94,
-    width: 94,
+    height: 96,
+    width: 96,
+    flexShrink: 0,
   },
   copy: {
     flex: 1,
+    minWidth: 0,
+    width: '100%',
     justifyContent: 'center',
   },
   compactCopy: {
     padding: 11,
   },
   titleRow: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 6,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   name: {
     color: '#464846',
     flex: 1,
-    fontSize: 15,
+    fontSize: 20,
+    lineHeight: 27,
     fontWeight: '800',
   },
   seller: {
-    color: '#969996',
-    fontSize: 12,
+    color: '#526055',
+    fontSize: 16,
+    lineHeight: 23,
     marginTop: 4,
   },
   price: {
     color: BrandColors.primary,
-    fontSize: 15,
+    fontSize: 20,
+    lineHeight: 27,
     fontWeight: '800',
     marginTop: 5,
   },
   unit: {
-    color: '#999C99',
-    fontSize: 12,
+    color: '#526055',
+    fontSize: 16,
+    lineHeight: 23,
     fontWeight: '500',
   },
   futureBadge: {
@@ -127,7 +146,7 @@ const styles = StyleSheet.create({
   },
   futureBadgeText: {
     color: BrandColors.warning,
-    fontSize: 9,
+    fontSize: 14,
     fontWeight: '800',
   },
 });

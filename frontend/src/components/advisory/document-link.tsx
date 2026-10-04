@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Button, Linking, Text, View } from 'react-native';
+import { Linking, View } from 'react-native';
+import { Text } from '@/i18n/native';
+import { Button } from '@/components/button';
 
 export function DocumentLink({ name, url }: { name: string; url: string }) {
   const [error, setError] = useState<string | null>(null);

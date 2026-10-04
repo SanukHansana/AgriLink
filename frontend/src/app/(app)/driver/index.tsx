@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { type Href, useRouter } from 'expo-router';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DeliveryJobCard } from '@/components/driver/delivery-job-card';
@@ -160,7 +154,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 20, paddingBottom: 30 },
   greetingRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   greetingCopy: { flex: 1, marginRight: 10 },

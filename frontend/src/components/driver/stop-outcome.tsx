@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Button, Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/native';
+import { Button } from '@/components/button';
 import { FormField } from '@/components/auth/form-field';
 import { ProofForm, type StopProof } from './proof-form';
 import { getApiErrorMessage } from '@/services/api';

@@ -1,14 +1,7 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
@@ -86,16 +79,17 @@ export default function BuyerSearchScreen() {
             <View style={styles.searchRow}>
               <Text style={styles.searchIcon}>⌕</Text>
               <TextInput
+                accessibilityLabel="Search products"
                 autoCapitalize="none"
                 onChangeText={setQuery}
                 placeholder="Search fresh produce…"
-                placeholderTextColor="#9A9D9A"
+                placeholderTextColor="#58665C"
                 returnKeyType="search"
                 style={styles.searchInput}
                 value={query}
               />
               {query ? (
-                <Pressable accessibilityRole="button" onPress={() => setQuery('')}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={12} onPress={() => setQuery('')}>
                   <Text style={styles.clearIcon}>×</Text>
                 </Pressable>
               ) : null}
@@ -161,7 +155,7 @@ export default function BuyerSearchScreen() {
               <Text style={styles.resultCount}>
                 {isLoading ? 'Finding products…' : `${total} product${total === 1 ? '' : 's'}`}
               </Text>
-              <Pressable accessibilityRole="button" onPress={cycleSort}>
+              <Pressable accessibilityRole="button" onPress={cycleSort} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 8 }}>
                 <Text style={styles.sortText}>{sortLabels[sort]}⌄</Text>
               </Pressable>
             </View>
@@ -196,6 +190,7 @@ function FilterChip({ active, label, onPress }: FilterChipProps) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={[styles.chip, active && styles.activeChip]}>
       <Text style={[styles.chipText, active && styles.activeChipText]}>{label}</Text>
@@ -205,7 +200,7 @@ function FilterChip({ active, label, onPress }: FilterChipProps) {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   listContent: {
@@ -218,7 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     flexDirection: 'row',
     marginTop: 12,
-    minHeight: 48,
+    minHeight: 56,
     paddingHorizontal: 13,
   },
   searchIcon: {
@@ -228,7 +223,7 @@ const styles = StyleSheet.create({
   searchInput: {
     color: '#414341',
     flex: 1,
-    fontSize: 14,
+    fontSize: 18,
     paddingHorizontal: 8,
   },
   clearIcon: {
@@ -249,7 +244,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     paddingHorizontal: 13,
-    paddingVertical: 8,
+    paddingVertical: 12,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   activeChip: {
     backgroundColor: BrandColors.primary,
@@ -257,7 +254,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     color: '#5D605D',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
   },
   activeChipText: {
@@ -267,17 +264,19 @@ const styles = StyleSheet.create({
   resultsRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     justifyContent: 'space-between',
     paddingBottom: 12,
     paddingTop: 16,
   },
   resultCount: {
-    color: '#969996',
-    fontSize: 12,
+    color: '#526055',
+    fontSize: 16,
   },
   sortText: {
     color: BrandColors.primary,
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '800',
   },
   separator: {

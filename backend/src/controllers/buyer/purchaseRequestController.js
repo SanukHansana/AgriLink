@@ -1,3 +1,4 @@
+import { assertMapPin } from '../../utils/validation.js';
 import { PRODUCT_UNITS } from '../../models/Bid.js';
 import { PRODUCT_CATEGORIES } from '../../models/Product.js';
 import PurchaseRequest, {
@@ -18,6 +19,7 @@ const FIELDS = [
 ];
 
 function requestData(body) {
+  assertMapPin(body.deliveryLocation);
   return FIELDS.reduce((data, field) => {
     if (body[field] !== undefined) data[field] = body[field];
     return data;

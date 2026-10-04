@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { BrandColors } from '@/constants/theme';
 

@@ -1,6 +1,11 @@
+import { LocationFields, type MapPin } from '@/components/location-fields';
+import { OptionalDetails } from '@/components/optional-details';
+import { SelectField } from '@/components/select-field';
+import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as ImagePicker from '@/services/image-picker';
+import { Image, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 
 import { FormField } from '@/components/auth/form-field';
 import { PrimaryButton } from '@/components/auth/primary-button';
@@ -20,6 +25,7 @@ export function ProductForm({
   error,
   defaultListingType = 'current',
   initialProduct,
+  defaultLocation,
   isSubmitting,
   onSubmit,
   submitLabel,
@@ -27,6 +33,7 @@ export function ProductForm({
   error?: string | null;
   defaultListingType?: ListingType;
   initialProduct?: MarketplaceProduct;
+  defaultLocation?: MarketplaceProduct['farmLocation'];
   isSubmitting: boolean;
   onSubmit: (input: FarmerProductInput) => void;
   submitLabel: string;
@@ -39,20 +46,22 @@ export function ProductForm({
   const [unit, setUnit] = useState<ProductUnit>(initialProduct?.unit ?? 'kg');
   const [minimumOrder, setMinimumOrder] = useState(initialProduct ? String(initialProduct.minimumOrderQuantity) : '1');
   const [qualityGrade, setQualityGrade] = useState(initialProduct?.qualityGrade ?? '');
-  const [addressLine, setAddressLine] = useState(initialProduct?.farmLocation.addressLine ?? '');
-  const [city, setCity] = useState(initialProduct?.farmLocation.city ?? '');
-  const [district, setDistrict] = useState(initialProduct?.farmLocation.district ?? '');
+  const [addressLine, setAddressLine] = useState(initialProduct?.farmLocation.addressLine ?? defaultLocation?.addressLine ?? '');
+  const [city, setCity] = useState(initialProduct?.farmLocation.city ?? defaultLocation?.city ?? '');
+  const [district, setDistrict] = useState(initialProduct?.farmLocation.district ?? defaultLocation?.district ?? '');
   const [harvestDate, setHarvestDate] = useState(initialProduct?.harvestDate?.slice(0, 10) ?? '');
   const [pricingMode, setPricingMode] = useState<PricingMode>(initialProduct?.pricingMode ?? 'fixedPrice');
   const [fixedPrice, setFixedPrice] = useState(initialProduct?.fixedPrice ? String(initialProduct.fixedPrice) : '');
   const [minimumBidPrice, setMinimumBidPrice] = useState(initialProduct?.minimumBidPrice ? String(initialProduct.minimumBidPrice) : '');
-  const [biddingClosesAt, setBiddingClosesAt] = useState(initialProduct?.biddingClosesAt?.slice(0, 10) ?? '');
+  const [biddingClosesAt, setBiddingClosesAt] = useState(initialProduct?.biddingClosesAt ?? '');
   const [imageData, setImageData] = useState(initialProduct?.images[0] ?? '');
   const [imageUri, setImageUri] = useState(initialProduct?.images[0] ?? '');
+  const [pin, setPin] = useState<MapPin>({ latitude: initialProduct?.farmLocation.latitude ?? defaultLocation?.latitude, longitude: initialProduct?.farmLocation.longitude ?? defaultLocation?.longitude });
   const [localError, setLocalError] = useState<string | null>(null);
 
   const chooseImage = async () => {
     setLocalError(null);
+    try {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setLocalError('Photo access is required to select a product image.');
@@ -73,6 +82,7 @@ export function ProductForm({
     }
     setImageData(encoded);
     setImageUri(asset.uri);
+    } catch (cause) { setLocalError(cause instanceof Error ? cause.message : 'Unable to load image. Try another photo.'); }
   };
 
   const submit = () => {
@@ -92,7 +102,7 @@ export function ProductForm({
       setLocalError('Enter a valid fixed price.');
       return;
     }
-    if (['bidding', 'both'].includes(pricingMode) && (!Number.isFinite(parsedMinimumBid) || parsedMinimumBid <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(biddingClosesAt))) {
+    if (['bidding', 'both'].includes(pricingMode) && (!Number.isFinite(parsedMinimumBid) || parsedMinimumBid <= 0 || !biddingClosesAt.trim() || !Number.isFinite(new Date(biddingClosesAt).getTime()))) {
       setLocalError('Enter a valid minimum bid and bidding close date.');
       return;
     }
@@ -101,7 +111,7 @@ export function ProductForm({
       name: name.trim(), category, description: description.trim() || undefined,
       images: imageData ? [imageData] : [], listingType, availableQuantity: parsedQuantity,
       unit, minimumOrderQuantity: parsedMinimumOrder, qualityGrade: qualityGrade.trim() || undefined,
-      farmLocation: { addressLine: addressLine.trim() || undefined, city: city.trim() || undefined, district: district.trim() },
+      farmLocation: { ...pin, addressLine: addressLine.trim() || undefined, city: city.trim() || undefined, district: district.trim() },
       harvestDate: listingType === 'future' ? harvestDate : undefined, pricingMode,
       fixedPrice: ['fixedPrice', 'both'].includes(pricingMode) ? parsedFixedPrice : undefined,
       minimumBidPrice: ['bidding', 'both'].includes(pricingMode) ? parsedMinimumBid : undefined,
@@ -112,24 +122,28 @@ export function ProductForm({
 
   return (
     <View style={styles.form}>
-      <Pressable onPress={chooseImage} style={styles.imagePicker}>
-        {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : <View style={styles.imagePlaceholder}><Text style={styles.imageIcon}>▣</Text><Text style={styles.imageText}>Upload Product Image</Text><Text style={styles.imageHint}>JPG or PNG, compressed before upload</Text></View>}
+      <Pressable accessibilityRole="button" accessibilityLabel="Choose product photo (optional)" onPress={chooseImage} style={styles.imagePicker}>
+        {imageUri ? <Image source={{ uri: imageUri }} style={styles.image} /> : <View style={styles.imagePlaceholder}><Text style={styles.imageIcon}>▣</Text><Text style={styles.imageText}>Add photo (optional)</Text><Text style={styles.imageHint}>JPG or PNG, compressed before upload</Text></View>}
       </Pressable>
       <FormField autoCapitalize="words" label="Product Name" onChangeText={setName} placeholder="e.g. Keeri Samba Rice" value={name} />
       <ChoiceSection label="Category">{categories.map((item) => <Choice key={item} active={category === item} label={capitalize(item)} onPress={() => setCategory(item)} />)}</ChoiceSection>
-      <ChoiceSection label="Listing Type"><Choice active={listingType === 'current'} label="Current Product" onPress={() => setListingType('current')} /><Choice active={listingType === 'future'} label="Future Harvest" onPress={() => setListingType('future')} /></ChoiceSection>
-      {listingType === 'future' ? <FormField label="Expected Harvest Date" onChangeText={setHarvestDate} placeholder="YYYY-MM-DD" value={harvestDate} /> : null}
+      <SelectField label="Listing Type" value={listingType} options={[{ label: 'Current Product', value: 'current' }, { label: 'Future Harvest', value: 'future' }]} onChange={setListingType} />
+      {listingType === 'future' ? <DateTimeField label="Expected Harvest Date" onChangeText={setHarvestDate} placeholder="YYYY-MM-DD" value={harvestDate} /> : null}
       <View style={styles.row}><View style={styles.flex}><FormField keyboardType="numeric" label="Available Quantity" onChangeText={setQuantity} placeholder="500" value={quantity} /></View><View style={styles.flex}><Text style={styles.label}>Unit</Text><View style={styles.unitRow}>{units.map((item) => <Choice key={item} active={unit === item} label={item} onPress={() => setUnit(item)} />)}</View></View></View>
-      <FormField keyboardType="numeric" label="Minimum Order Quantity" onChangeText={setMinimumOrder} placeholder="10" value={minimumOrder} />
-      <FormField autoCapitalize="words" label="Quality / Grade" onChangeText={setQualityGrade} placeholder="Grade A, Organic, C5 Extra..." value={qualityGrade} />
       <ChoiceSection label="Selling Option">{pricingModes.map((item) => <Choice key={item.value} active={pricingMode === item.value} label={item.label} onPress={() => setPricingMode(item.value)} />)}</ChoiceSection>
       {['fixedPrice', 'both'].includes(pricingMode) ? <FormField keyboardType="numeric" label="Fixed Price per Unit (LKR)" onChangeText={setFixedPrice} placeholder="225" value={fixedPrice} /> : null}
-      {['bidding', 'both'].includes(pricingMode) ? <><FormField keyboardType="numeric" label="Minimum Bid per Unit (LKR)" onChangeText={setMinimumBidPrice} placeholder="195" value={minimumBidPrice} /><FormField label="Bidding Closing Date" onChangeText={setBiddingClosesAt} placeholder="YYYY-MM-DD" value={biddingClosesAt} /></> : null}
+      {['bidding', 'both'].includes(pricingMode) ? <><FormField keyboardType="numeric" label="Minimum Bid per Unit (LKR)" onChangeText={setMinimumBidPrice} placeholder="195" value={minimumBidPrice} /><DateTimeField mode="datetime" label="Bidding closing date and time" onChangeText={setBiddingClosesAt} value={biddingClosesAt} /></> : null}
+      {district ? <View style={{ gap: 6 }}><Text style={styles.sectionTitle}>Pickup location</Text><Text style={{ fontSize: 16, color: '#46584B' }}>{[addressLine, city, district].filter(Boolean).join(', ')}</Text><Text style={{ fontSize: 14, color: '#536559' }}>Using your saved farm location. Change it in More details if needed.</Text></View> : <FormField label="Farm district" value={district} onChangeText={setDistrict} />}
+      <LocationFields value={pin} onChange={setPin} />
+      <OptionalDetails>
       <Text style={styles.sectionTitle}>Farm Location</Text>
       <FormField autoCapitalize="words" label="Address" onChangeText={setAddressLine} placeholder="Farm road or field" value={addressLine} />
       <View style={styles.row}><View style={styles.flex}><FormField autoCapitalize="words" label="City" onChangeText={setCity} placeholder="Kandy" value={city} /></View><View style={styles.flex}><FormField autoCapitalize="words" label="District" onChangeText={setDistrict} placeholder="Kandy" value={district} /></View></View>
-      <Text style={styles.label}>Description</Text>
+      <FormField keyboardType="numeric" label="Minimum Order Quantity" onChangeText={setMinimumOrder} placeholder="10" value={minimumOrder} />
+      <FormField autoCapitalize="words" label="Quality / Grade" onChangeText={setQualityGrade} placeholder="Grade A, Organic, C5 Extra..." value={qualityGrade} />
+      <Text style={styles.label}>Description (optional)</Text>
       <TextInput maxLength={1000} multiline onChangeText={setDescription} placeholder="Describe the harvest, quality, and growing method..." placeholderTextColor="#A0A3A1" style={styles.description} textAlignVertical="top" value={description} />
+      </OptionalDetails>
       {localError || error ? <Text style={styles.error}>{localError ?? error}</Text> : null}
       <PrimaryButton label={submitLabel} loading={isSubmitting} onPress={submit} />
     </View>
@@ -137,15 +151,15 @@ export function ProductForm({
 }
 
 function ChoiceSection({ children, label }: { children: React.ReactNode; label: string }) { return <View><Text style={styles.label}>{label}</Text><View style={styles.choiceRow}>{children}</View></View>; }
-function Choice({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) { return <Pressable onPress={onPress} style={[styles.choice, active && styles.activeChoice]}><Text style={[styles.choiceText, active && styles.activeChoiceText]}>{label}</Text></Pressable>; }
+function Choice({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) { return <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.choice, active && styles.activeChoice]}><Text style={[styles.choiceText, active && styles.activeChoiceText]}>{label}</Text></Pressable>; }
 function capitalize(value: string) { return value.charAt(0).toUpperCase() + value.slice(1); }
 
 const styles = StyleSheet.create({
   form: { gap: 15 }, imagePicker: { borderColor: BrandColors.primary, borderRadius: 14, borderStyle: 'dashed', borderWidth: 1, height: 155, overflow: 'hidden' },
   image: { height: '100%', width: '100%' }, imagePlaceholder: { alignItems: 'center', backgroundColor: BrandColors.primarySurface, flex: 1, justifyContent: 'center' },
-  imageIcon: { color: BrandColors.primary, fontSize: 29 }, imageText: { color: BrandColors.primary, fontSize: 12, fontWeight: '800', marginTop: 6 }, imageHint: { color: '#9A9D9A', fontSize: 9, marginTop: 4 },
-  label: { color: '#525552', fontSize: 13, fontWeight: '700', marginBottom: 7 }, sectionTitle: { color: BrandColors.primary, fontSize: 14, fontWeight: '800', marginTop: 4 },
-  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, choice: { borderColor: BrandColors.border, borderRadius: 16, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 8 }, activeChoice: { backgroundColor: BrandColors.primarySoft, borderColor: BrandColors.primary },
-  choiceText: { color: '#666966', fontSize: 9, fontWeight: '700' }, activeChoiceText: { color: BrandColors.primary }, row: { flexDirection: 'row', gap: 10 }, flex: { flex: 1 }, unitRow: { flexDirection: 'row', gap: 4 },
-  description: { borderColor: BrandColors.border, borderRadius: 12, borderWidth: 1, color: '#343434', fontSize: 13, minHeight: 100, padding: 12 }, error: { color: BrandColors.danger, fontSize: 11, textAlign: 'center' },
+  imageIcon: { color: BrandColors.primary, fontSize: 29 }, imageText: { color: BrandColors.primary, fontSize: 16, fontWeight: '800', marginTop: 6 }, imageHint: { color: '#536559', fontSize: 14, marginTop: 4 },
+  label: { color: '#525552', fontSize: 16, fontWeight: '700', marginBottom: 7 }, sectionTitle: { color: BrandColors.primary, fontSize: 14, fontWeight: '800', marginTop: 4 },
+  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, choice: { borderColor: BrandColors.border, borderRadius: 16, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 12, minHeight: 48 }, activeChoice: { backgroundColor: BrandColors.primaryDark, borderColor: BrandColors.primary },
+  choiceText: { color: '#666966', fontSize: 14, fontWeight: '700' }, activeChoiceText: { color: BrandColors.white }, row: { flexDirection: 'column', gap: 16 }, flex: { flex: 1 }, unitRow: { flexDirection: 'row', gap: 4 },
+  description: { backgroundColor: '#fff', borderColor: BrandColors.border, borderRadius: 12, borderWidth: 1, color: '#343434', fontSize: 16, minHeight: 100, padding: 12 }, error: { color: BrandColors.danger, fontSize: 16, textAlign: 'center' },
 });

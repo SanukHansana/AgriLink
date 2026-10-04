@@ -11,6 +11,8 @@ export type BidProductSummary = {
   biddingClosesAt?: string;
   status: 'active' | 'pending' | 'inactive' | 'sold';
   farmLocation?: {
+    latitude?: number;
+    longitude?: number;
     district: string;
   };
 };
@@ -56,6 +58,8 @@ export type OrderProductSummary = {
   images: string[];
   unit: ProductUnit;
   farmLocation?: {
+    latitude?: number;
+    longitude?: number;
     addressLine?: string;
     city?: string;
     district: string;
@@ -63,6 +67,9 @@ export type OrderProductSummary = {
 };
 
 export type BuyerOrder = {
+  paymentStatus?: 'unpaid' | 'paid';
+  paymentProvider?: 'mock';
+  receivedAt?: string;
   deliveryJob?: string;
   _id: string;
   orderCode: string;

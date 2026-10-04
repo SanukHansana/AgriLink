@@ -1,15 +1,9 @@
+import { LanguagePicker } from '@/components/language-picker';
+import { DateTimeField } from '@/components/date-time-field';
 import { VehicleControls } from '@/components/driver/vehicle-controls';
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormField } from '@/components/auth/form-field';
@@ -19,7 +13,7 @@ import { BrandColors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useDriverOverview } from '@/hooks/use-driver-overview';
 import { getApiErrorMessage } from '@/services/api';
-import { createDriverProfile, createDriverVehicle } from '@/services/driver-service';
+import { createDriverProfile, createDriverVehicle, updateDriverProfile } from '@/services/driver-service';
 import type { VehicleType } from '@/types/logistics';
 
 const vehicleTypes: { label: string; value: VehicleType }[] = [
@@ -34,6 +28,7 @@ const vehicleTypes: { label: string; value: VehicleType }[] = [
 export default function DriverProfileScreen() {
   const { logout, user } = useAuth();
   const overview = useDriverOverview();
+  const [editingProfile, setEditingProfile] = useState(false);
   const [phone, setPhone] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
@@ -69,14 +64,14 @@ export default function DriverProfileScreen() {
     setIsSavingProfile(true);
     setFormError(null);
     try {
-      await createDriverProfile({
+      await (overview.profile ? updateDriverProfile : createDriverProfile)({
         phone: phone.trim(),
         licenseNumber: licenseNumber.trim(),
         licenseExpiryDate: licenseExpiryDate.trim(),
         baseLocation: { city: city.trim() || undefined, district: district.trim() },
-        availabilityStatus: 'available',
+        ...(overview.profile ? {} : { availabilityStatus: 'available' as const }),
       });
-      overview.refresh();
+      setEditingProfile(false); overview.refresh();
     } catch (error) {
       setFormError(getApiErrorMessage(error));
     } finally {
@@ -129,8 +124,8 @@ export default function DriverProfileScreen() {
               <Text style={styles.avatarText}>{user?.name.slice(0, 1).toUpperCase()}</Text>
             </View>
             <View style={styles.identityCopy}>
-              <Text style={styles.name}>{user?.name}</Text>
-              <Text style={styles.email}>{user?.email}</Text>
+              <Text style={styles.name} localize={false}>{user?.name}</Text>
+              <Text style={styles.email} localize={false}>{user?.email}</Text>
               {overview.profile ? (
                 <Text style={styles.verified}>DRIVER PROFILE ACTIVE</Text>
               ) : (
@@ -139,9 +134,9 @@ export default function DriverProfileScreen() {
             </View>
           </View>
 
-          {overview.profile ? (
+          {overview.profile && !editingProfile ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Driver Details</Text>
+              <Text style={styles.sectionTitle}>Driver Details</Text><PrimaryButton label="Edit Profile" onPress={() => { const profile = overview.profile!; setPhone(profile.phone); setLicenseNumber(profile.licenseNumber); setLicenseExpiryDate(profile.licenseExpiryDate.slice(0, 10)); setCity(profile.baseLocation.city ?? ''); setDistrict(profile.baseLocation.district); setFormError(null); setEditingProfile(true); }} />
               <InfoRow label="Phone" value={overview.profile.phone} />
               <InfoRow label="Licence" value={overview.profile.licenseNumber} />
               <InfoRow
@@ -161,8 +156,9 @@ export default function DriverProfileScreen() {
             </View>
           ) : (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Complete Driver Setup</Text>
+              <Text style={styles.sectionTitle}>{overview.profile ? 'Edit Driver Profile' : 'Complete Driver Setup'}</Text>
               <Text style={styles.sectionHint}>These details are required before accepting jobs.</Text>
+              {overview.profile && <PrimaryButton label="Cancel changes" onPress={() => setEditingProfile(false)} />}
               <FormField
                 keyboardType="phone-pad"
                 label="Phone number"
@@ -177,7 +173,7 @@ export default function DriverProfileScreen() {
                 placeholder="B1234567"
                 value={licenseNumber}
               />
-              <FormField
+              <DateTimeField
                 label="Licence expiry date"
                 onChangeText={setLicenseExpiryDate}
                 placeholder="YYYY-MM-DD"
@@ -296,7 +292,7 @@ export default function DriverProfileScreen() {
           <Pressable onPress={logout} style={styles.logoutButton}>
             <Text style={styles.logoutText}>Sign Out Account</Text>
           </Pressable>
-        </ScrollView>
+        <LanguagePicker profile /></ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -312,7 +308,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: BrandColors.white, flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   keyboardView: { flex: 1 },
   content: { padding: 16, paddingBottom: 36 },
   title: { color: BrandColors.primary, fontSize: 21, fontWeight: '800', marginTop: 4 },
@@ -368,7 +364,7 @@ const styles = StyleSheet.create({
   column: { flex: 1 },
   vehicleCard: {
     alignItems: 'center',
-    backgroundColor: BrandColors.primarySurface,
+    backgroundColor: '#fff',
     borderRadius: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',

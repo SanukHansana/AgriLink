@@ -47,7 +47,13 @@
           "locationAlwaysAndWhenInUsePermission": "Allow AgriLink to share your location during an active delivery, including when the app is in the background."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#008A36"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

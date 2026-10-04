@@ -1,4 +1,5 @@
 import { validLicence } from '../../services/driver-workflows.js';
+import { requireOrderPayment } from '../../services/order-payment.js';
 import mongoose from 'mongoose';
 import { saveDeliveryJob, removeDeliveryJob } from '../../services/deliveries.js';
 import { fail } from '../../services/bidding.js';
@@ -300,6 +301,7 @@ export async function acceptDeliveryJob(request, response, next) {
       if (!claimed.modifiedCount) fail('Driver is no longer available', 409);
       const orders = await Order.find({ _id: { $in: availableJob.orders } }).session(session);
       if (orders.length !== availableJob.orders.length || orders.some((order) => !['preparing', 'dispatched', 'inTransit', 'delivered', 'deliveryFailed', 'returned'].includes(order.status))) fail('An order is no longer ready for pickup', 409);
+      orders.forEach(requireOrderPayment);
       if (orders.some((order) => order.deliveryJob && String(order.deliveryJob) !== String(availableJob._id))) fail('An order is claimed by another delivery', 409);
       for (const order of orders) await Order.updateOne({ _id: order._id }, { $set: { deliveryJob: availableJob._id } }, { session });
       const assigned = await DeliveryJob.findOneAndUpdate(
@@ -357,7 +359,7 @@ export async function updateDeliveryJobStatus(request, response, next) {
       });
     }
 
-    if (status === 'collecting' && currentJob.scheduledPickupAt > new Date()) fail('The scheduled pickup time has not arrived yet', 409);
+    // The scheduled time is a plan; the assigned driver can record an early arrival.
     if (status === 'inTransit' && currentJob.pickupPoints.some((point) => !point.completedAt)) fail('Confirm every pickup stop before starting transit', 409);
     if (status === 'delivered' && currentJob.dropoffPoints?.length && currentJob.dropoffPoints.some((point) => !point.completedAt || point.outcome !== 'delivered')) fail('Confirm every drop-off before completing the trip', 409);
 
@@ -413,6 +415,14 @@ export async function updateDeliveryJobStatus(request, response, next) {
       if (status === 'delivered') await DriverProfile.updateOne({ user: request.user._id }, { $set: { availabilityStatus: 'available' } }, { session });
       return changed;
     });
+
+    const orders = await Order.find({ deliveryJob: job._id });
+    for (const order of orders) {
+      const orderStatus = status === 'collecting' ? 'dispatched' : status;
+      const message = status === 'delivered' ? 'delivered. Please confirm receipt in Orders' : status === 'inTransit' ? 'out for delivery' : 'being collected by the driver';
+      await notify(order.buyer, `Order ${order.orderCode} is ${message}.`, `order-status:${order._id}:${orderStatus}`);
+    }
+    await notify(job.createdBy, `Delivery ${job.jobCode} is ${status}.`, `delivery-status:${job._id}:${status}`);
 
     return response.status(200).json({
       message: 'Delivery status updated successfully',

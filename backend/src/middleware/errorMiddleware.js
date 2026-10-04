@@ -5,6 +5,9 @@ export function notFoundHandler(request, response) {
 }
 
 export function errorHandler(error, _request, response, _next) {
+  if (error.type === 'entity.too.large') {
+    return response.status(413).json({ message: 'The upload is too large. Crop the photo or choose a smaller image.' });
+  }
   if (error.name === 'ValidationError') {
     const message = Object.values(error.errors)
       .map((validationError) => validationError.message)

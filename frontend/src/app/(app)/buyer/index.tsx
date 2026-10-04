@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
@@ -43,11 +44,11 @@ export default function BuyerHomeScreen() {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/buyer/subscription')} style={{ padding: 12, backgroundColor: '#e9f2ec', borderRadius: 12 }}>
-            <Text style={{ color: BrandColors.primary, fontWeight: '700' }}>Outbid alerts</Text>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/buyer/subscription')} style={{ padding: 12, backgroundColor: BrandColors.primaryDark, borderRadius: 12 }}>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>Outbid alerts</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/buyer/bids')} style={{ padding: 12 }}>
-            <Text style={{ color: BrandColors.primary, fontWeight: '700' }}>My Bids</Text>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/buyer/bids')} style={{ padding: 12, borderWidth: 1, borderColor: BrandColors.primaryDark, backgroundColor: '#fff', borderRadius: 12 }}>
+            <Text style={{ color: BrandColors.primaryDark, fontWeight: '700' }}>My Bids</Text>
           </Pressable>
         </View>
 
@@ -120,7 +121,7 @@ export default function BuyerHomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   content: {

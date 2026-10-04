@@ -31,6 +31,8 @@ export type MarketplaceProduct = {
   unit: ProductUnit;
   qualityGrade?: string;
   farmLocation: {
+    latitude?: number;
+    longitude?: number;
     addressLine?: string;
     city?: string;
     district: string;

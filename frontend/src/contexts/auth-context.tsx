@@ -8,13 +8,13 @@ import {
   useRef,
   useState,
 } from 'react';
-import { AppState } from 'react-native';
 
 import { loginUser, registerUser } from '@/services/auth-service';
 import { api, setApiToken } from '@/services/api';
 import type { AuthUser, LoginInput, RegisterInput } from '@/types/auth';
 import { writeSession } from '@/services/session-store';
 import { setOfflineOwner } from '@/services/offline-driver';
+import { unregisterPhonePush } from '@/services/push-notifications';
 import { stopBackgroundSharing } from '@/services/background-location';
 
 type AuthContextValue = {
@@ -90,19 +90,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     sessionGeneration.current += 1;
+    await unregisterPhonePush().catch(() => {});
     setApiToken(null);
     setOfflineOwner(null);
     setUser(null);
     await writeSession(null).catch(() => {});
     await stopBackgroundSharing().catch(() => {});
   }, []);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'background') void logout();
-    });
-    return () => subscription.remove();
-  }, [logout]);
 
   const refreshUser = useCallback(async () => {
     const generation = sessionGeneration.current;

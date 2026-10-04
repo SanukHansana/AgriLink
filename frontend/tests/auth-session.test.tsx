@@ -1,8 +1,9 @@
 import { afterEach, expect, jest, test } from '@jest/globals';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
-import { AppState, type AppStateStatus, Button, Text, View } from 'react-native';
+import { Button, DeviceEventEmitter, Text, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/contexts/auth-context';
 import { readSession, writeSession } from '../src/services/session-store';
+import { setApiToken } from '../src/services/api';
 
 jest.mock('../src/services/session-store', () => ({ readSession: jest.fn(), writeSession: jest.fn(async () => {}) }));
 jest.mock('../src/services/api', () => ({ api: { get: jest.fn() }, setApiToken: jest.fn() }));
@@ -31,16 +32,16 @@ test('requires fresh login after reopening and does not persist the login respon
   expect(await screen.findByText('Login required')).toBeTruthy();
 });
 
-test('returning to the running app after backgrounding requires login again', async () => {
-  let change!: (state: AppStateStatus) => void;
-  jest.spyOn(AppState, 'addEventListener').mockImplementation((event, listener) => {
-    change = listener;
-    return { remove: jest.fn() };
-  });
+test('native photo-screen lifecycle events preserve the current login and API token', async () => {
   await render(<AuthProvider><SessionView /></AuthProvider>);
   await screen.findByText('Login required');
   await fireEvent.press(screen.getByRole('button', { name: 'Log in' }));
   await screen.findByText('Signed in');
-  await act(async () => { change('background'); change('active'); });
-  expect(await screen.findByText('Login required')).toBeTruthy();
+  await act(async () => {
+    for (const state of ['inactive', 'background', 'active', 'background', 'active']) {
+      DeviceEventEmitter.emit('appStateDidChange', { app_state: state });
+    }
+  });
+  expect(screen.getByText('Signed in')).toBeTruthy();
+  expect(setApiToken).toHaveBeenLastCalledWith('token');
 });

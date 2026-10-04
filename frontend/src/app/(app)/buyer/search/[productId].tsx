@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
@@ -60,7 +61,7 @@ export default function BuyerProductDetailsScreen() {
 
         <View style={styles.titleRow}>
           <View style={styles.titleCopy}>
-            <Text style={styles.productName}>{product.name}</Text>
+            <Text style={styles.productName} localize={false}>{product.name}</Text>
             <Text style={styles.price}>
               {price === undefined ? 'Bidding available' : formatLkr(price)}
               {price === undefined ? '' : (
@@ -193,7 +194,7 @@ export default function BuyerProductDetailsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   content: {
@@ -355,6 +356,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   quantityControl: {
+    backgroundColor: '#fff',
     alignItems: 'center',
     borderColor: BrandColors.border,
     borderRadius: 12,

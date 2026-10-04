@@ -1,12 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DriverLocation } from '@/components/buyer/driver-location';
@@ -183,7 +177,7 @@ function TrackingContent({
 
       <View style={styles.deliveryCard}>
         <Text style={styles.sectionTitle}>Delivery Address</Text>
-        <Text style={styles.deliveryAddress}>{order.deliveryAddress.addressLine}</Text>
+        <Text style={styles.deliveryAddress} localize={false}>{order.deliveryAddress.addressLine}</Text>
         <Text style={styles.deliveryAddress}>
           {order.deliveryAddress.city}, {order.deliveryAddress.district}
           {order.deliveryAddress.postalCode ? ` ${order.deliveryAddress.postalCode}` : ''}
@@ -200,7 +194,7 @@ function TrackingContent({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   header: {

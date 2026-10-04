@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { type Href, useRouter } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdvisoryState } from '@/components/advisory/advisory-state';
@@ -65,7 +66,7 @@ function filterLabel(filter: RequestFilter) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 30 },
   title: { color: BrandColors.primary, fontSize: 21, fontWeight: '800', marginTop: 8 },
   subtitle: { color: '#999C99', fontSize: 10, marginTop: 4 },

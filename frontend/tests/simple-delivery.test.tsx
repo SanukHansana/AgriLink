@@ -1,0 +1,35 @@
+import { afterEach, expect, jest, test } from '@jest/globals';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react-native';
+import Pickup from '../src/app/(app)/farmer/pickup';
+import Profile from '../src/app/(app)/farmer/profile';
+import { api } from '../src/services/api';
+import { updateFarmerProfile, createFarmerProfile } from '../src/services/farmer-service';
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }), useLocalSearchParams: () => ({ orderId: 'order' }), useFocusEffect: jest.fn() }));
+jest.mock('../src/contexts/auth-context', () => ({ useAuth: () => ({ user: { name: 'Farmer' }, logout: jest.fn() }) }));
+jest.mock('../src/hooks/use-farmer-orders', () => ({ useFarmerOrders: () => ({ orders: [{ _id: 'order', orderCode: 'AG-1', status: 'preparing', paymentStatus: 'paid', quantity: 12, unit: 'kg', product: { name: 'Rabu' }, deliveryAddress: { addressLine: 'Street', city: 'Kandy', district: 'Kandy' } }], refresh: jest.fn(), isLoading: false }) }));
+jest.mock('../src/hooks/use-farmer-profile', () => ({ useFarmerProfile: () => ({ profile: { farmName: 'My Farm', phone: '0771234567', farmLocation: { addressLine: 'Farm road', city: 'Kandy', district: 'Kandy', latitude: 7, longitude: 80 }, mainCrops: ['Rabu'], updatedAt: 'today' }, refresh: jest.fn(), isLoading: false }) }));
+jest.mock('../src/hooks/use-farmer-products', () => ({ useFarmerProducts: () => ({ products: [] }) }));
+jest.mock('../src/hooks/use-farmer-deliveries', () => ({ useFarmerDeliveries: () => ({ jobs: [], refresh: jest.fn(), isLoading: false }) }));
+jest.mock('../src/components/location-fields', () => ({ LocationFields: () => null, mapUrl: jest.fn() }));
+jest.mock('../src/components/farmer/saved-farm-location', () => ({ SavedFarmLocation: () => null }));
+jest.mock('../src/services/api', () => ({ api: { post: jest.fn(async () => ({})) }, getApiErrorMessage: () => 'Error' }));
+jest.mock('../src/services/farmer-service', () => ({ updateFarmerProfile: jest.fn(async () => ({})), createFarmerProfile: jest.fn(async () => ({})) }));
+afterEach(async () => { await cleanup(); });
+test('delivery preselects order, calculates kg and permits manual weight adjustment', async () => {
+  await render(<Pickup />);
+  expect(screen.getByLabelText('Total weight (kg)').props.value).toBe('12');
+  expect(screen.queryByLabelText('Cargo description')).toBeNull();
+  await fireEvent.changeText(screen.getByLabelText('Total weight (kg)'), '15');
+  await fireEvent.changeText(screen.getByLabelText('Driver payout (LKR)'), '500');
+  await fireEvent.press(screen.getByRole('button', { name: 'Publish delivery' }));
+  expect(api.post).toHaveBeenCalledWith('/logistics/jobs', expect.objectContaining({ orders: ['order'], cargoDescription: 'Rabu (12 kg)', totalWeightKg: 15, payoutAmount: 500 }));
+});
+test('existing farmer profile edits details using PATCH and preserves saved coordinates', async () => {
+  await render(<Profile />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Edit Profile' }));
+  expect(screen.getByLabelText('Farm Name').props.value).toBe('My Farm');
+  await fireEvent.changeText(screen.getByLabelText('Farm Name'), 'New Farm');
+  await fireEvent.press(screen.getByRole('button', { name: 'Save Farmer Profile' }));
+  expect(updateFarmerProfile).toHaveBeenCalledWith(expect.objectContaining({ farmName: 'New Farm', farmLocation: expect.objectContaining({ latitude: 7, longitude: 80 }) }));
+  expect(createFarmerProfile).not.toHaveBeenCalled();
+});

@@ -4,6 +4,7 @@ import { notify } from '../../services/notifications.js';
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
 import Product from '../../models/Product.js';
 import DeliveryJob from '../../models/DeliveryJob.js';
+import { validateDemoPayment } from '../../services/order-payment.js';
 import {
   isPositiveNumber,
   isValidMongoId,
@@ -83,6 +84,35 @@ function createBuyerOrder(orderType) {
 
 export const createFixedPriceOrder = createBuyerOrder('fixedPrice');
 export const createAdvanceOrder = createBuyerOrder('advance');
+
+export async function payBuyerOrder(request, response, next) {
+  try {
+    if (!isValidMongoId(request.params.orderId)) fail('Enter a valid order ID');
+    validateDemoPayment(request.body);
+    const order = await Order.findOneAndUpdate({ _id: request.params.orderId, buyer: request.user._id, status: 'confirmed', paymentStatus: { $ne: 'paid' } }, { $set: { paymentStatus: 'paid', paymentProvider: 'mock', paidAt: new Date() } }, { new: true, runValidators: true });
+    if (!order) {
+      const paid = await Order.findOne({ _id: request.params.orderId, buyer: request.user._id, paymentStatus: 'paid' });
+      if (paid) return response.json({ order: paid });
+      fail('Wait for the farmer to accept this order before paying', 409);
+    }
+    await notify(order.seller, `Demo payment received for ${order.orderCode}. You can prepare the order.`, `order-paid:${order._id}`);
+    return response.json({ order, message: 'Mock payment complete. No money was charged.' });
+  } catch (error) { return next(error); }
+}
+
+export async function receiveBuyerOrder(request, response, next) {
+  try {
+    if (!isValidMongoId(request.params.orderId)) fail('Enter a valid order ID');
+    const order = await Order.findOneAndUpdate({ _id: request.params.orderId, buyer: request.user._id, status: 'delivered', receivedAt: null }, { $set: { receivedAt: new Date() } }, { new: true });
+    if (!order) {
+      const received = await Order.findOne({ _id: request.params.orderId, buyer: request.user._id, status: 'delivered', receivedAt: { $ne: null } });
+      if (received) return response.json({ order: received });
+      fail('Confirm receipt after the driver records delivery', 409);
+    }
+    await notify(order.seller, `Buyer confirmed receipt of ${order.orderCode}.`, `order-received:${order._id}`);
+    return response.json({ order });
+  } catch (error) { return next(error); }
+}
 
 export async function updateRequestedDeliveryDate(request, response, next) {
   try {

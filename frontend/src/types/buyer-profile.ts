@@ -10,6 +10,8 @@ export const BUYER_TYPES = [
 export type BuyerType = (typeof BUYER_TYPES)[number];
 
 export type DeliveryLocation = {
+  latitude?: number;
+  longitude?: number;
   _id?: string;
   label?: string;
   addressLine: string;

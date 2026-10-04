@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DriverDataState } from '@/components/driver/driver-data-state';
@@ -93,7 +94,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 35 },
   header: { alignItems: 'center', flexDirection: 'row', marginTop: 8 },
   back: { color: BrandColors.primary, fontSize: 36, lineHeight: 38, marginRight: 10 },

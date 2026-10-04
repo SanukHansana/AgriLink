@@ -1,7 +1,8 @@
 import { DocumentLink } from '@/components/advisory/document-link';
 import { useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdvisoryState } from '@/components/advisory/advisory-state';
@@ -62,8 +63,8 @@ export default function OfficerRequestDetailsScreen() {
         <View style={styles.farmerCard}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{request.farmer.name.charAt(0).toUpperCase()}</Text></View>
           <View style={styles.farmerCopy}>
-            <Text style={styles.farmerName}>{request.farmer.name}</Text>
-            <Text style={styles.farmerMeta}>{request.farmer.email}</Text>
+            <Text style={styles.farmerName} localize={false}>{request.farmer.name}</Text>
+            <Text style={styles.farmerMeta} localize={false}>{request.farmer.email}</Text>
           </View>
           <View style={styles.priorityBadge}><Text style={styles.priorityText}>{request.priority.toUpperCase()}</Text></View>
           <View style={styles.farmDivider} />
@@ -79,9 +80,9 @@ export default function OfficerRequestDetailsScreen() {
             <View style={styles.statusBadge}><Text style={styles.statusText}>{statusLabel(request.status)}</Text></View>
           </View>
           <Text style={styles.smallLabel}>REQUEST TITLE</Text>
-          <Text style={styles.requestTitle}>{request.title}</Text>
+          <Text style={styles.requestTitle} localize={false}>{request.title}</Text>
           <Text style={[styles.smallLabel, styles.descriptionLabel]}>FARMER&apos;S DESCRIPTION</Text>
-          <Text style={styles.description}>{request.description}</Text>
+          <Text style={styles.description} localize={false}>{request.description}</Text>
           <Text style={styles.submitted}>Submitted {new Date(request.createdAt).toLocaleDateString('en-LK')}</Text>
         </View>
 
@@ -132,7 +133,7 @@ function statusLabel(value: string) { return value.replace(/([A-Z])/g, ' $1').re
 function responseLabel(value: string) { return statusLabel(value); }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 34 },
   header: { alignItems: 'center', flexDirection: 'row', minHeight: 58 },
   back: { color: BrandColors.primary, fontSize: 36, lineHeight: 38 },
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
   farmRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
   smallLabel: { color: '#999C99', fontSize: 8 },
   farmValue: { color: '#454845', fontSize: 11, fontWeight: '800', marginTop: 4 },
-  requestCard: { backgroundColor: BrandColors.white, borderColor: BrandColors.border, borderRadius: 15, borderWidth: 1, marginTop: 14, padding: 15 },
+  requestCard: { backgroundColor: '#fff', borderColor: BrandColors.border, borderRadius: 15, borderWidth: 1, marginTop: 14, padding: 15 },
   requestHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
   categoryBadge: { backgroundColor: '#FFE4E4', borderRadius: 7, paddingHorizontal: 9, paddingVertical: 6 },
   categoryText: { color: BrandColors.danger, fontSize: 8, fontWeight: '800' },

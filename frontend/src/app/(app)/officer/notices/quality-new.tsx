@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
@@ -14,4 +15,4 @@ export default function CreateQualityGuidelineScreen() {
 }
 function Label({ text }: { text: string }) { return <Text style={styles.label}>{text}</Text>; }
 function Input(props: React.ComponentProps<typeof TextInput>) { return <TextInput placeholderTextColor="#A1A4A1" style={styles.input} {...props} />; }
-const styles = StyleSheet.create({ safeArea: { backgroundColor: '#FAFCFA', flex: 1 }, content: { padding: 16, paddingBottom: 34 }, header: { alignItems: 'center', flexDirection: 'row', minHeight: 66 }, back: { color: BrandColors.primary, fontSize: 36, marginRight: 11 }, title: { color: BrandColors.primary, fontSize: 19, fontWeight: '800' }, label: { color: '#555855', fontSize: 10, fontWeight: '800', marginBottom: 7, marginTop: 14 }, input: { backgroundColor: BrandColors.white, borderColor: BrandColors.border, borderRadius: 9, borderWidth: 1, color: '#454845', fontSize: 11, minHeight: 43, paddingHorizontal: 11 }, row: { flexDirection: 'row', gap: 10 }, half: { flex: 1 }, error: { color: BrandColors.danger, fontSize: 10, marginTop: 11, textAlign: 'center' }, submit: { alignItems: 'center', backgroundColor: BrandColors.primary, borderRadius: 11, marginTop: 18, paddingVertical: 15 }, submitText: { color: BrandColors.white, fontSize: 11, fontWeight: '800' } });
+const styles = StyleSheet.create({ safeArea: { backgroundColor: BrandColors.background, flex: 1 }, content: { padding: 16, paddingBottom: 34 }, header: { alignItems: 'center', flexDirection: 'row', minHeight: 66 }, back: { color: BrandColors.primary, fontSize: 36, marginRight: 11 }, title: { color: BrandColors.primary, fontSize: 19, fontWeight: '800' }, label: { color: '#555855', fontSize: 10, fontWeight: '800', marginBottom: 7, marginTop: 14 }, input: { backgroundColor: BrandColors.white, borderColor: BrandColors.border, borderRadius: 9, borderWidth: 1, color: '#454845', fontSize: 11, minHeight: 43, paddingHorizontal: 11 }, row: { flexDirection: 'row', gap: 10 }, half: { flex: 1 }, error: { color: BrandColors.danger, fontSize: 10, marginTop: 11, textAlign: 'center' }, submit: { alignItems: 'center', backgroundColor: BrandColors.primary, borderRadius: 11, marginTop: 18, paddingVertical: 15 }, submitText: { color: BrandColors.white, fontSize: 11, fontWeight: '800' } });

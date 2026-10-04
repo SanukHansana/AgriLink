@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { BrandColors } from '@/constants/theme';
 import type { AssistanceRequest } from '@/types/advisory';
@@ -34,7 +35,7 @@ export function RequestCard({
       onPress={onPress}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.header}>
-        <Text numberOfLines={1} style={styles.farmer}>
+        <Text numberOfLines={1} style={styles.farmer} localize={false}>
           {request.farmer.name}
         </Text>
         <View style={[styles.badge, { backgroundColor: priority.background }]}>
@@ -42,7 +43,7 @@ export function RequestCard({
         </View>
       </View>
       <Text style={styles.label}>Request Type</Text>
-      <Text numberOfLines={2} style={styles.title}>{request.title}</Text>
+      <Text numberOfLines={2} style={styles.title} localize={false}>{request.title}</Text>
       <View style={styles.footer}>
         <Text style={styles.date}>Submitted: {new Date(request.createdAt).toLocaleDateString('en-LK')}</Text>
         <View style={[styles.badge, { backgroundColor: status.background }]}>
@@ -71,7 +72,7 @@ function statusLabel(status: AssistanceRequest['status']) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 14,
     borderWidth: 1,

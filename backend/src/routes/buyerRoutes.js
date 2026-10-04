@@ -24,6 +24,8 @@ import {
   getBuyerOrder,
   getBuyerOrders,
   updateRequestedDeliveryDate,
+  payBuyerOrder,
+  receiveBuyerOrder,
 } from '../controllers/buyer/orderController.js';
 import {
   getMarketplaceProduct,
@@ -64,6 +66,8 @@ router.post('/orders/fixed-price', createFixedPriceOrder);
 router.post('/orders/advance', createAdvanceOrder);
 router.get('/orders', getBuyerOrders);
 router.get('/orders/:orderId', getBuyerOrder);
+router.post('/orders/:orderId/payment', payBuyerOrder);
+router.post('/orders/:orderId/received', receiveBuyerOrder);
 router.patch('/orders/:orderId/delivery-date', updateRequestedDeliveryDate);
 router.get('/orders/:orderId/delivery', getOrderDelivery);
 router.post('/orders/:orderId/reviews', createBuyerReview);
