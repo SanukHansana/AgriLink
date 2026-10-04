@@ -2,9 +2,10 @@ import User from '../models/User.js';
 import Bid from '../models/Bid.js';
 import Product from '../models/Product.js';
 import { notify } from './notifications.js';
+import { simulatedBillingEnabled } from './simulated-billing.js';
 
 export function mockSubscriptionsEnabled() {
-  return process.env.NODE_ENV !== 'production' && process.env.MOCK_SUBSCRIPTIONS_ENABLED !== 'false';
+  return simulatedBillingEnabled('MOCK_SUBSCRIPTIONS_ENABLED');
 }
 
 export function hasOutbidSubscription(user, now = new Date()) {
