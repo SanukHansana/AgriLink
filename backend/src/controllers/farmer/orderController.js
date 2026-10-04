@@ -4,8 +4,10 @@ import DeliveryJob from '../../models/DeliveryJob.js';
 import { fail } from '../../services/bidding.js';
 import Order, { ORDER_STATUSES } from '../../models/Order.js';
 import { isValidMongoId } from '../../utils/validation.js';
+import { requireOrderPayment } from '../../services/order-payment.js';
+import { notify } from '../../services/notifications.js';
 
-const FARMER_ORDER_UPDATES = ['confirmed', 'preparing', 'dispatched', 'cancelled'];
+const FARMER_ORDER_UPDATES = ['confirmed', 'preparing', 'dispatched', 'inTransit', 'cancelled'];
 
 function populateOrder(query) {
   return query
@@ -60,6 +62,17 @@ export async function updateFarmerOrderStatus(request, response, next) {
         status: { $nin: ['inTransit', 'delivered', 'cancelled'] },
       }).session(session);
       if (!order) fail('Editable order not found or delivery has already started', 404);
+      if (['preparing', 'dispatched', 'inTransit'].includes(status)) requireOrderPayment(order);
+      if (status === 'inTransit') {
+        const job = await DeliveryJob.findOne({ _id: order.deliveryJob, createdBy: request.user._id, status: 'collecting' }).session(session);
+        if (!job || !job.assignedDriver || job.pickupPoints.some((point) => !point.completedAt)) fail('Assigned driver must confirm every farm pickup first', 409);
+        job.status = 'inTransit'; job.transitStartedAt = new Date();
+        job.statusUpdates.push({ status: 'inTransit', note: 'Farmer confirmed cargo departure' });
+        await job.save({ session });
+        await Order.updateMany({ _id: { $in: job.orders }, status: 'dispatched', paymentStatus: 'paid' }, { $set: { status: 'inTransit' } }, { session });
+        return;
+      }
+      if (status === 'dispatched') fail('Publish a pickup job to dispatch this order to drivers', 409);
       if (order.deliveryJob) fail('Cancel the unassigned delivery job first, or let the driver update this order', 409);
       if (await DeliveryJob.exists({ orders: order._id, status: { $ne: 'cancelled' } }).session(session)) fail('This order is already scheduled for delivery', 409);
       const allowed = { pending: ['confirmed', 'cancelled'], confirmed: ['preparing', 'cancelled'], preparing: ['dispatched', 'cancelled'], dispatched: ['cancelled'] };
@@ -76,6 +89,13 @@ export async function updateFarmerOrderStatus(request, response, next) {
       await order.save({ session });
     });
     const order = await populateOrder(Order.findById(orderId));
+    if (status === 'inTransit' && order.deliveryJob) {
+      const tripOrders = await Order.find({ deliveryJob: order.deliveryJob });
+      for (const item of tripOrders) await notify(item.buyer, `Order ${item.orderCode} is out for delivery.`, `order-status:${item._id}:inTransit`);
+    } else {
+      const description = status === 'confirmed' ? 'accepted. Please pay for your order before the farmer can prepare it' : status;
+      await notify(order.buyer._id ?? order.buyer, `Order ${order.orderCode} is ${description}.`, `order-status:${order._id}:${status}`);
+    }
     return response.status(200).json({
       message: 'Order status updated successfully',
       order,

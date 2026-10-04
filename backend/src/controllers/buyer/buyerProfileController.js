@@ -1,3 +1,4 @@
+import { assertMapPin } from '../../utils/validation.js';
 import BuyerProfile from '../../models/BuyerProfile.js';
 
 const PROFILE_FIELDS = [
@@ -9,6 +10,7 @@ const PROFILE_FIELDS = [
 ];
 
 function profileData(body) {
+  if (Array.isArray(body.deliveryLocations)) body.deliveryLocations.forEach(assertMapPin);
   return PROFILE_FIELDS.reduce((profile, field) => {
     if (body[field] !== undefined) {
       profile[field] = body[field];

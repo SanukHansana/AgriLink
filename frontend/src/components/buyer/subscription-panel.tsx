@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { BrandColors } from '@/constants/theme';
 import { api, getApiErrorMessage } from '@/services/api';
+import { MockCardCheckout } from './mock-card-checkout';
 
 type SubscriptionResponse = {
   subscription: { provider: 'mock'; status: 'active' | 'inactive'; expiresAt: string | null };
@@ -12,6 +14,7 @@ export function SubscriptionPanel() {
   const [data, setData] = useState<SubscriptionResponse | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [checkout, setCheckout] = useState(false);
   const load = async () => {
     setBusy(true); setError(null);
     try { setData((await api.get<SubscriptionResponse>('/buyers/subscription')).data); }
@@ -28,8 +31,8 @@ export function SubscriptionPanel() {
   }, []);
   const change = async (action: 'subscribe' | 'cancel') => {
     setBusy(true); setError(null);
-    try { setData((await api.patch<SubscriptionResponse>('/buyers/subscription', { action })).data); }
-    catch (cause) { setError(getApiErrorMessage(cause)); }
+    try { setData((await api.patch<SubscriptionResponse>('/buyers/subscription', { action })).data); return true; }
+    catch (cause) { setError(getApiErrorMessage(cause)); return false; }
     finally { setBusy(false); }
   };
   const active = data?.subscription.status === 'active';
@@ -42,20 +45,22 @@ export function SubscriptionPanel() {
     <View style={styles.card}>
       <View style={styles.headingRow}><Text style={styles.plan}>Outbid alerts</Text><View style={styles.badge}><Text style={styles.badgeText}>{active ? 'Subscription active' : 'Subscription inactive'}</Text></View></View>
       <Text style={styles.price}>Free demo</Text>
-      <Text style={styles.detail}>30 days of alerts · No card required · No automatic renewal</Text>
+      <Text style={styles.detail}>30 days of alerts · Mock card checkout · No automatic renewal</Text>
       <View style={styles.benefits}>
         <Text style={styles.benefit}>✓ Alerts when another buyer outbids your active offer</Text>
         <Text style={styles.benefit}>✓ Review your offers from My Bids</Text>
         <Text style={styles.benefit}>✓ Cancel whenever you want</Text>
       </View>
       {active && data?.subscription.expiresAt && <Text style={styles.expiry}>Expires: {new Date(data.subscription.expiresAt).toLocaleString('en-LK')}</Text>}
-      {data && (active || data.mockAvailable) && <SubscriptionAction title={active ? 'Cancel subscription' : 'Activate demo subscription'} secondary={active} disabled={busy} onPress={() => void change(active ? 'cancel' : 'subscribe')} />}
+      {data && (active || data.mockAvailable) && !checkout && <SubscriptionAction title={active ? 'Cancel subscription' : 'Activate demo subscription'} secondary={active} disabled={busy} onPress={() => { if (active) void change('cancel'); else setCheckout(true); }} />}
+      {checkout && !active && <MockCardCheckout busy={busy} onConfirm={() => change('subscribe')} onCancel={() => setCheckout(false)} />}
+      {checkout && active && <><Text style={styles.expiry}>Demo checkout complete. No money was charged.</Text><SubscriptionAction title="Cancel subscription" secondary disabled={busy} onPress={() => { setCheckout(false); void change('cancel'); }} /></>}
       {data && !active && !data.mockAvailable && <Text style={styles.detail}>Demo subscriptions are unavailable on this server.</Text>}
       {busy && <View style={styles.loading}><ActivityIndicator color={BrandColors.primary} /><Text style={styles.detail}>Updating subscription...</Text></View>}
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       <SubscriptionAction title="Refresh subscription" secondary disabled={busy} onPress={() => void load()} />
     </View>
-    <View style={styles.note}><Text style={styles.noteTitle}>Where to see your alerts</Text><Text style={styles.detail}>Open Notifications while using the app. Background phone push alerts are not enabled in this version.</Text></View>
+    <View style={styles.note}><Text style={styles.noteTitle}>Where to see your alerts</Text><Text style={styles.detail}>Open Notifications to enable phone alerts on a development or production build. Outbid alerts require an active subscription.</Text></View>
   </View>;
 }
 
@@ -69,7 +74,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: BrandColors.primaryDark, fontSize: 11, fontWeight: '800', letterSpacing: 1.5 },
   title: { color: BrandColors.primaryDark, fontSize: 28, fontWeight: '800' },
   subtitle: { color: '#486551', fontSize: 15, lineHeight: 23 },
-  card: { backgroundColor: BrandColors.white, borderColor: BrandColors.border, borderWidth: 1, borderRadius: 18, padding: 24, gap: 16 },
+  card: { backgroundColor: '#fff', borderColor: BrandColors.border, borderWidth: 1, borderRadius: 18, padding: 24, gap: 16 },
   headingRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   plan: { color: '#343434', fontSize: 20, fontWeight: '800' },
   badge: { backgroundColor: BrandColors.primarySoft, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16 },

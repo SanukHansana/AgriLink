@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { Button } from '@/components/button';
 import { useFarmerProducts } from '@/hooks/use-farmer-products';
 import { api, getApiErrorMessage } from '@/services/api';

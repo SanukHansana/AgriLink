@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import * as ImagePicker from '@/services/image-picker';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DriverDataState } from '@/components/driver/driver-data-state';
@@ -196,7 +197,7 @@ export default function DriverReportIssueScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 35 },
   header: { alignItems: 'center', flexDirection: 'row', marginBottom: 20, marginTop: 7 },
   back: { color: BrandColors.primary, fontSize: 36, lineHeight: 38, marginRight: 10 },

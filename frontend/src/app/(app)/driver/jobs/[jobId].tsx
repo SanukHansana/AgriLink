@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DriverDataState } from '@/components/driver/driver-data-state';
@@ -69,7 +70,7 @@ export default function DriverJobDetailsScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={() => router.replace('/(app)/driver/active' as Href)}
-            style={styles.primaryButton}>
+            style={[styles.primaryButton, styles.activeDeliveryButton]}>
             <Text style={styles.primaryButtonText}>Go to Active Delivery</Text>
           </Pressable>
         </View>
@@ -228,7 +229,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { paddingBottom: 32 },
   header: { alignItems: 'center', flexDirection: 'row', minHeight: 70, paddingHorizontal: 20 },
   back: { color: BrandColors.primary, fontSize: 37, lineHeight: 39 },
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   payoutRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   payoutLabel: { color: '#414441', fontSize: 13, fontWeight: '800' },
   payoutValue: { color: BrandColors.primary, fontSize: 17, fontWeight: '800' },
-  noticeCard: { backgroundColor: '#FFF4D7', borderRadius: 12, marginHorizontal: 20, marginTop: 18, padding: 13 },
+  noticeCard: { backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 20, marginTop: 18, padding: 13 },
   noticeTitle: { color: '#855F08', fontSize: 12, fontWeight: '800' },
   noticeText: { color: '#8C7848', fontSize: 10, lineHeight: 15, marginTop: 4 },
   smallButton: { alignSelf: 'flex-start', backgroundColor: '#855F08', borderRadius: 8, marginTop: 9, paddingHorizontal: 12, paddingVertical: 7 },
@@ -276,6 +277,7 @@ const styles = StyleSheet.create({
   selectedVehicleText: { color: BrandColors.primary },
   error: { color: BrandColors.danger, fontSize: 11, marginHorizontal: 20, marginTop: 10, textAlign: 'center' },
   primaryButton: { alignItems: 'center', backgroundColor: BrandColors.primary, borderRadius: 24, marginHorizontal: 20, marginTop: 18, paddingVertical: 14 },
+  activeDeliveryButton: { alignSelf: 'stretch', marginHorizontal: 0, minHeight: 54, paddingHorizontal: 20, justifyContent: 'center' },
   primaryButtonText: { color: BrandColors.white, fontSize: 13, fontWeight: '800' },
   disabledButton: { opacity: 0.45 },
   confirmedContent: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: 20 },

@@ -1,6 +1,7 @@
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Alert, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PurchaseRequestForm } from '@/components/buyer/purchase-request-form';
 import { BuyerDataState } from '@/components/buyer/buyer-data-state';
@@ -17,4 +18,4 @@ export default function WantedProductDetailScreen() {
   if (isLoading) return <BuyerDataState isLoading />; if (!item) return <BuyerDataState error={error ?? 'Wanted product not found.'} onRetry={() => router.back()} />;
   return <SafeAreaView edges={['top']} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><View style={styles.header}><Pressable accessibilityLabel="Go back" onPress={router.back} style={styles.backButton}><Text style={styles.back}>{'<'}</Text></Pressable><View style={styles.heading}><Text style={styles.brand}>AgriLink</Text><Text style={styles.title}>Edit Wanted Product</Text></View><Pressable onPress={remove} style={styles.deleteButton}><Text style={styles.deleteText}>Delete</Text></Pressable></View><PurchaseRequestForm error={error} initialValue={item} isSubmitting={isSubmitting} onSubmit={submit} submitLabel="Save Changes" /></ScrollView></SafeAreaView>;
 }
-const styles = StyleSheet.create({ safeArea: { backgroundColor: BrandColors.white, flex: 1 }, content: { padding: 18, paddingBottom: 35 }, header: { alignItems: 'center', flexDirection: 'row', marginBottom: 18 }, backButton: { alignItems: 'center', height: 44, justifyContent: 'center', marginRight: 8, width: 36 }, back: { color: BrandColors.primary, fontSize: 25, fontWeight: '800' }, heading: { flex: 1 }, brand: { color: BrandColors.primary, fontSize: 25, fontWeight: '800' }, title: { color: '#4A4D4A', fontSize: 15, fontWeight: '800', marginTop: -3 }, deleteButton: { paddingHorizontal: 8, paddingVertical: 10 }, deleteText: { color: BrandColors.danger, fontSize: 12, fontWeight: '800' } });
+const styles = StyleSheet.create({ safeArea: { backgroundColor: BrandColors.background, flex: 1 }, content: { padding: 18, paddingBottom: 35 }, header: { alignItems: 'center', flexDirection: 'row', marginBottom: 18 }, backButton: { alignItems: 'center', height: 44, justifyContent: 'center', marginRight: 8, width: 36 }, back: { color: BrandColors.primary, fontSize: 25, fontWeight: '800' }, heading: { flex: 1 }, brand: { color: BrandColors.primary, fontSize: 25, fontWeight: '800' }, title: { color: '#4A4D4A', fontSize: 15, fontWeight: '800', marginTop: -3 }, deleteButton: { paddingHorizontal: 8, paddingVertical: 10 }, deleteText: { color: BrandColors.danger, fontSize: 12, fontWeight: '800' } });

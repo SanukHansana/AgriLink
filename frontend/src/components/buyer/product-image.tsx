@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { StyleSheet, Text, View, type ImageStyle, type StyleProp } from 'react-native';
+import { StyleSheet, View, type ImageStyle, type StyleProp } from 'react-native';
+import { Text } from '@/i18n/native';
 
 import { BrandColors } from '@/constants/theme';
 import type { MarketplaceProduct } from '@/types/marketplace';

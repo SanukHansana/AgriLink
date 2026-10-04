@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { type Href, useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FarmerProductTile } from '@/components/farmer/product-tile';
@@ -33,7 +34,7 @@ export default function FarmerProductsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 }, content: { padding: 16, paddingBottom: 30 }, header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 }, content: { padding: 16, paddingBottom: 30 }, header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   brand: { color: BrandColors.primary, fontSize: 27, fontWeight: '800' }, title: { color: BrandColors.primary, fontSize: 16, fontWeight: '800', marginTop: -3 }, addButton: { alignItems: 'center', backgroundColor: BrandColors.primarySoft, borderRadius: 22, height: 44, justifyContent: 'center', width: 44 }, addText: { color: BrandColors.primary, fontSize: 28 },
   harvestBanner: { alignItems: 'center', backgroundColor: BrandColors.primarySurface, borderColor: BrandColors.primary, borderRadius: 12, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, padding: 13 }, harvestTitle: { color: BrandColors.primary, fontSize: 12, fontWeight: '800' }, harvestText: { color: '#8D908D', fontSize: 9, marginTop: 3 }, arrow: { color: BrandColors.primary, fontSize: 25 },
   listHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }, filters: { flexDirection: 'row', gap: 7, marginVertical: 14 }, filter: { backgroundColor: BrandColors.primarySoft, borderRadius: 17, paddingHorizontal: 11, paddingVertical: 8 }, activeFilter: { backgroundColor: BrandColors.primary }, filterText: { color: BrandColors.primary, fontSize: 9, fontWeight: '800' }, activeFilterText: { color: BrandColors.white }, bidsLink: { color: BrandColors.primary, fontSize: 9, fontWeight: '800' }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

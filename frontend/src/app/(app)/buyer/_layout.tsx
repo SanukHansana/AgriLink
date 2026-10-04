@@ -1,3 +1,4 @@
+import { translate, useLanguage } from '@/i18n/language';
 import { Redirect, Tabs } from 'expo-router';
 
 import { BuyerTabIcon } from '@/components/buyer/tab-icon';
@@ -5,6 +6,7 @@ import { BrandColors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function BuyerTabsLayout() {
+  useLanguage();
   const { user } = useAuth();
 
   if (user?.role !== 'buyer') {
@@ -22,7 +24,7 @@ export default function BuyerTabsLayout() {
           fontWeight: '700',
         },
         tabBarStyle: {
-          backgroundColor: BrandColors.white,
+          backgroundColor: BrandColors.cream,
           borderTopColor: BrandColors.border,
           height: 72,
           paddingBottom: 8,
@@ -32,35 +34,35 @@ export default function BuyerTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: translate('Home'),
           tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="home" />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Search',
+          title: translate('Search'),
           tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="search" />,
         }}
       />
       <Tabs.Screen
         name="wanted"
         options={{
-          title: 'Wanted',
+          title: translate('Wanted'),
           tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="wanted" />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Orders',
+          title: translate('Orders'),
           tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="orders" />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: translate('Profile'),
           tabBarIcon: ({ color }) => <BuyerTabIcon color={color} name="profile" />,
         }}
       />

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, type TextInputProps } from 'react-native';
+import { Modal, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { FormField } from '@/components/auth/form-field';
 import { Button } from '@/components/button';
 import { SelectField } from '@/components/select-field';
@@ -17,7 +18,9 @@ function parseSelection(value: string) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-export function DateTimeField({ label, value = '', onChangeText, mode = 'date', ...props }: TextInputProps & { label: string; mode?: 'date' | 'datetime' }) {
+export function DateTimeField({ label, value = '', onChangeText, mode = 'date', allowPastDates = false, ...props }: TextInputProps & { label: string; mode?: 'date' | 'datetime'; allowPastDates?: boolean }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(() => parseSelection(value));
   const [month, setMonth] = useState(() => new Date(selected.getFullYear(), selected.getMonth(), 1));
@@ -29,7 +32,8 @@ export function DateTimeField({ label, value = '', onChangeText, mode = 'date', 
     const next = new Date(selected); next.setHours(hour, minute, 0, 0); setSelected(next);
   };
   const choose = () => {
-    const initial = parseSelection(value);
+    const parsed = parseSelection(value);
+    const initial = !allowPastDates && parsed < today ? new Date() : parsed;
     setSelected(initial); setMonth(new Date(initial.getFullYear(), initial.getMonth(), 1)); setOpen(true);
   };
   return <View style={{ gap: 8 }}>
@@ -47,12 +51,14 @@ export function DateTimeField({ label, value = '', onChangeText, mode = 'date', 
               const day = index + 1;
               const date = new Date(year, month.getMonth(), day, selected.getHours(), selected.getMinutes());
               const active = localDate(selected) === localDate(date);
-              return <Pressable key={day} accessibilityRole="button" accessibilityLabel={`Select ${localDate(date)}`} accessibilityState={{ selected: active }} onPress={() => setSelected(date)} style={[styles.day, active && styles.selected]}><Text style={{ color: active ? '#fff' : BrandColors.primary }}>{day}</Text></Pressable>;
+              const disabled = !allowPastDates && date < today;
+              return <Pressable key={day} disabled={disabled} accessibilityRole="button" accessibilityLabel={`Select ${localDate(date)}`} accessibilityState={{ selected: active, disabled }} onPress={() => setSelected(date)} style={[styles.day, active && !disabled && styles.selected, disabled && styles.disabledDay]}><Text style={{ color: disabled ? '#7B827B' : active ? '#fff' : BrandColors.primary }}>{day}</Text></Pressable>;
             })}
           </View>
           {mode === 'datetime' && <View style={styles.row}><View style={{ flex: 1 }}><SelectField label="Hour (24-hour)" value={String(selected.getHours())} options={hours} onChange={(value) => updateTime(Number(value), selected.getMinutes())} /></View><View style={{ flex: 1 }}><SelectField label="Minute" value={String(selected.getMinutes())} options={minutes} onChange={(value) => updateTime(selected.getHours(), Number(value))} /></View></View>}
           <Text>Selected: {mode === 'date' ? localDate(selected) : selected.toLocaleString()} {mode === 'datetime' ? '(local time)' : ''}</Text>
-          <Button title="Use selected date" onPress={() => { onChangeText?.(mode === 'date' ? localDate(selected) : selected.toISOString()); setOpen(false); }} />
+          {!allowPastDates && <Text>Choose today or a future date.</Text>}
+          <Button title="Use selected date" disabled={!allowPastDates && selected < today} onPress={() => { if (!allowPastDates && selected < today) return; onChangeText?.(mode === 'date' ? localDate(selected) : selected.toISOString()); setOpen(false); }} />
           <Button title="Cancel date selection" onPress={() => setOpen(false)} />
         </ScrollView>
       </View></View>
@@ -69,4 +75,5 @@ const styles = StyleSheet.create({
   weekday: { width: '14.2857%', textAlign: 'center', paddingVertical: 8, color: '#525552' },
   day: { width: '14.2857%', height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
   selected: { backgroundColor: BrandColors.primary },
+  disabledDay: { backgroundColor: '#F0F0F0', opacity: 0.6 },
 });

@@ -1,5 +1,9 @@
+import { BotanicalAccent } from '@/components/botanical-accent';
+import { BrandLogo } from '@/components/brand-logo';
+import { BrandTagline } from '@/components/brand-tagline';
 import type { PropsWithChildren, ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandColors } from '@/constants/theme';
@@ -13,6 +17,7 @@ type AuthScreenProps = PropsWithChildren<{
 export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
+      <BotanicalAccent full />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}>
@@ -21,18 +26,19 @@ export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProp
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.brandRow}>
-            <View style={styles.brandMark}>
-              <Text style={styles.brandMarkText}>A</Text>
+            <BrandLogo width={240} />
+            <BrandTagline />
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.accentBar} />
+            <View style={styles.heading}>
+              <Text style={styles.eyebrow}>WELCOME TO AGRILINK</Text>
+              <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+              <Text style={styles.subtitle}>{subtitle}</Text>
             </View>
-            <Text style={styles.brandName}>AgriLink</Text>
+            {children}
           </View>
-
-          <View style={styles.heading}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
-          </View>
-
-          <View style={styles.card}>{children}</View>
           {footer}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -42,7 +48,7 @@ export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProp
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   keyboardView: {
@@ -52,14 +58,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 32,
+    paddingVertical: 24,
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
   },
   brandRow: {
     alignItems: 'center',
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 10,
     justifyContent: 'center',
-    marginBottom: 36,
+    marginBottom: 24,
   },
   brandMark: {
     alignItems: 'center',
@@ -81,23 +90,26 @@ const styles = StyleSheet.create({
   },
   heading: {
     gap: 6,
-    marginBottom: 22,
+    marginBottom: 8,
   },
   title: {
-    color: '#343434',
-    fontSize: 26,
+    color: BrandColors.primaryDark,
+    fontSize: 28,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#8E918F',
+    color: '#526055',
     fontSize: 15,
     lineHeight: 22,
   },
-  card: {
+  accentBar: { width: 48, height: 5, borderRadius: 3, backgroundColor: BrandColors.harvestGold },
+  eyebrow: { color: BrandColors.primaryDark, fontSize: 12, letterSpacing: 1, fontWeight: '700', marginBottom: 4 },
+  card: { backgroundColor: '#fff',
     borderColor: BrandColors.border,
-    borderRadius: 18,
+    borderRadius: 24,
     borderWidth: 1,
     gap: 16,
-    padding: 18,
+    padding: 24,
+    boxShadow: '0px 8px 24px rgba(35, 66, 38, 0.08)',
   },
 });

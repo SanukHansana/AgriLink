@@ -1,6 +1,7 @@
 import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { Button } from '@/components/button';
 import { FormField } from '@/components/auth/form-field';
 import { api, getApiErrorMessage } from '@/services/api';
@@ -16,7 +17,7 @@ export function HarvestActions({ product, onChange }: { product: MarketplaceProd
     try { await api.patch(`/farmers/products/${product._id}/harvest`, { harvestStatus: status, harvestDate: status === 'ready' ? new Date().toISOString() : date, note }); onChange(); }
     catch (cause) { setError(getApiErrorMessage(cause)); } finally { setBusy(false); }
   };
-  return <View style={{ gap: 12, padding: 16, backgroundColor: '#edf5ef', borderRadius: 12 }}>
+  return <View style={{ gap: 12, padding: 16, backgroundColor: '#fff', borderRadius: 12 }}>
     <Text style={{ fontWeight: '700' }}>{product.name} · {product.harvestStatus ?? 'growing'}</Text>
     {product.harvestDelayNote && <Text>{product.harvestDelayNote}</Text>}
     <Button title="Mark harvest ready now" disabled={busy || product.harvestStatus === 'ready'} onPress={() => void update('ready')} />

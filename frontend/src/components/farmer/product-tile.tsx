@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { ProductImage } from '@/components/buyer/product-image';
 import { BrandColors } from '@/constants/theme';
@@ -10,7 +11,7 @@ export function FarmerProductTile({ product, onPress }: { product: MarketplacePr
   return (
     <Pressable onPress={onPress} style={styles.card}>
       <ProductImage product={product} style={styles.image} />
-      <Text numberOfLines={1} style={styles.name}>{product.name}</Text>
+      <Text numberOfLines={1} style={styles.name} localize={false}>{product.name}</Text>
       <Text style={styles.price}>{price ? formatLkr(price) : 'Price not set'} <Text style={styles.unit}>/{product.unit}</Text></Text>
       <Text style={styles.stock}>Stock: {product.availableQuantity.toLocaleString('en-LK')} {product.unit}</Text>
       <View style={[styles.badge, product.status === 'pending' && styles.pending, product.status === 'sold' && styles.sold]}>
@@ -21,7 +22,7 @@ export function FarmerProductTile({ product, onPress }: { product: MarketplacePr
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: BrandColors.white, borderColor: BrandColors.border, borderRadius: 14, borderWidth: 1, padding: 10, width: '48.5%' },
+  card: { backgroundColor: '#fff', borderColor: BrandColors.border, borderRadius: 14, borderWidth: 1, padding: 10, width: '48.5%' },
   image: { borderRadius: 10, height: 100, width: '100%' },
   name: { color: '#505350', fontSize: 12, fontWeight: '800', marginTop: 8 },
   price: { color: BrandColors.primary, fontSize: 12, fontWeight: '800', marginTop: 5 },

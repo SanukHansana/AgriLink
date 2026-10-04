@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { getApiErrorMessage } from '@/services/api';
 import { getDriverJobs, getDriverProfile, getDriverVehicles } from '@/services/driver-service';
@@ -13,8 +14,9 @@ export function useDriverOverview() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isActive = true;
+    setIsLoading(true);
     const loadOverview = async () => {
       try {
         const [profileResult, vehicleResult, availableResult, mineResult] = await Promise.all([
@@ -40,7 +42,9 @@ export function useDriverOverview() {
     return () => {
       isActive = false;
     };
-  }, [refreshKey]);
+  // Recreate the focus callback when a manual refresh is requested.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]));
 
   const refresh = useCallback(() => {
     setIsLoading(true);

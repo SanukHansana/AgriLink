@@ -1,16 +1,9 @@
+import { SavedDeliveryButton } from '@/components/buyer/saved-delivery-button';
 import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MarketplaceState } from '@/components/buyer/marketplace-state';
@@ -35,6 +28,7 @@ export default function PlaceBidScreen() {
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
   const [pin, setPin] = useState<MapPin>({});
+  const [locationRevision, setLocationRevision] = useState(0);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,7 +106,7 @@ export default function PlaceBidScreen() {
           <View style={styles.productCard}>
             <ProductImage product={product} style={styles.productImage} />
             <View style={styles.productCopy}>
-              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productName} localize={false}>{product.name}</Text>
               <Text style={styles.seller}>Seller: {getSellerName(product)}</Text>
             </View>
           </View>
@@ -163,7 +157,8 @@ export default function PlaceBidScreen() {
             <FormField label="Delivery address" value={addressLine} onChangeText={setAddressLine} maxLength={180} placeholder="Street address" />
             <FormField label="City" value={city} onChangeText={setCity} maxLength={80} placeholder="Delivery city" />
             <FormField label="District" value={district} onChangeText={setDistrict} maxLength={80} placeholder="Delivery district" />
-            <LocationFields value={pin} onChange={setPin} />
+            <SavedDeliveryButton onSelect={(location) => { setAddressLine(location.addressLine); setCity(location.city); setDistrict(location.district); setPin({ latitude: location.latitude, longitude: location.longitude }); setLocationRevision((value) => value + 1); }} />
+            <LocationFields key={locationRevision} value={pin} onChange={setPin} />
             {product.listingType === 'future' && <DateTimeField label="Requested delivery date" value={deliveryDate} onChangeText={setDeliveryDate} placeholder="YYYY-MM-DD" maxLength={10} />}
           </View>
 
@@ -187,7 +182,7 @@ export default function PlaceBidScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   keyboardView: {
@@ -279,7 +274,7 @@ const styles = StyleSheet.create({
     marginBottom: 7,
     marginTop: 18,
   },
-  input: {
+  input: { backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 10,
     borderWidth: 1,

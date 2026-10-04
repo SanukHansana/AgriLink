@@ -1,19 +1,13 @@
 import { useState } from 'react';
 import * as ImagePicker from '@/services/image-picker';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FormField } from '@/components/auth/form-field';
 import { DriverDataState } from '@/components/driver/driver-data-state';
+import { DeliveryStops } from '@/components/driver/delivery-stops';
 import { BrandColors } from '@/constants/theme';
 import { useDriverJob } from '@/hooks/use-driver-job';
 import { getApiErrorMessage } from '@/services/api';
@@ -77,7 +71,7 @@ export default function DriverUpdateStatusScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={() => router.replace('/(app)/driver' as Href)}
-            style={styles.primaryButton}>
+            style={[styles.primaryButton, styles.returnButton]}>
             <Text style={styles.primaryButtonText}>Return to Dashboard</Text>
           </Pressable>
         </View>
@@ -94,6 +88,9 @@ export default function DriverUpdateStatusScreen() {
     );
   }
   const statusConfig = statusLabels[nextStatus];
+  const incompletePickups = nextStatus === 'inTransit' && job.pickupPoints.some((point) => !point.completedAt);
+  const incompleteDropoffs = nextStatus === 'delivered' && !!job.dropoffPoints?.length && job.dropoffPoints.some((point) => !point.completedAt || point.outcome !== 'delivered');
+  const waitingForStops = incompletePickups || incompleteDropoffs;
 
   const chooseProofPhoto = async () => {
     setSubmitError(null);
@@ -131,6 +128,10 @@ export default function DriverUpdateStatusScreen() {
   };
 
   const submitStatus = async () => {
+    if (waitingForStops) {
+      setSubmitError(incompletePickups ? 'Confirm collected at every pickup below before starting transit.' : 'Confirm delivery at every drop-off below before completing the trip.');
+      return;
+    }
     if (nextStatus === 'delivered' && (!photoData || !receiverName.trim() || !receiverSignature.trim())) {
       setSubmitError('Add a proof photo, receiver name, and receiver signature.');
       return;
@@ -187,10 +188,14 @@ export default function DriverUpdateStatusScreen() {
           <View style={styles.stepNumber}><Text style={styles.stepNumberText}>✓</Text></View>
           <View style={styles.stepCopy}>
             <Text style={styles.stepTitle}>{statusConfig.label}</Text>
-            <Text style={styles.stepDescription}>{statusConfig.description}</Text>
+            <Text style={styles.stepDescription} localize={false}>{statusConfig.description}</Text>
           </View>
         </View>
 
+        {(nextStatus === 'inTransit' || nextStatus === 'delivered') && <>
+          <Text style={{ padding: 16, fontSize: 16, lineHeight: 24, color: BrandColors.primaryDark }}>{nextStatus === 'inTransit' ? 'After loading, tap Confirm collected for each farm below. Then confirm cargo in transit.' : 'Confirm each buyer’s drop-off below before completing delivery.'}</Text>
+          <DeliveryStops job={job} onChange={refresh} />
+        </>}
         {nextStatus === 'delivered' ? (
           <View style={styles.proofSection}>
             <Text style={styles.sectionTitle}>Proof of Delivery</Text>
@@ -240,11 +245,12 @@ export default function DriverUpdateStatusScreen() {
         {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
         <Pressable
           accessibilityRole="button"
-          disabled={isSubmitting}
+          accessibilityState={{ disabled: isSubmitting || waitingForStops }}
+          disabled={isSubmitting || waitingForStops}
           onPress={submitStatus}
-          style={[styles.primaryButton, isSubmitting && styles.disabledButton]}>
+          style={[styles.primaryButton, (isSubmitting || waitingForStops) && styles.disabledButton]}>
           <Text style={styles.primaryButtonText}>
-            {isSubmitting ? 'Updating...' : statusConfig.action}
+            {isSubmitting ? 'Updating...' : incompletePickups ? 'Confirm pickup stops first' : incompleteDropoffs ? 'Confirm drop-off stops first' : statusConfig.action}
           </Text>
         </Pressable>
       </ScrollView>
@@ -257,7 +263,7 @@ function formatStatus(status: string) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { paddingBottom: 35 },
   header: { alignItems: 'center', borderBottomColor: BrandColors.border, borderBottomWidth: 1, flexDirection: 'row', minHeight: 76, paddingHorizontal: 20 },
   back: { color: BrandColors.primary, fontSize: 36, lineHeight: 38, marginRight: 12 },
@@ -283,10 +289,11 @@ const styles = StyleSheet.create({
   photoHint: { color: '#9A9D9A', fontSize: 9, marginTop: 4 },
   proofImage: { height: '100%', width: '100%' },
   notesSection: { marginHorizontal: 16, marginTop: 18 },
-  notesInput: { borderColor: BrandColors.border, borderRadius: 10, borderWidth: 1, color: '#454845', fontSize: 12, minHeight: 100, padding: 12 },
+  notesInput: { backgroundColor: '#fff', borderColor: BrandColors.border, borderRadius: 10, borderWidth: 1, color: '#454845', fontSize: 12, minHeight: 100, padding: 12 },
   counter: { color: '#A0A3A0', fontSize: 9, marginTop: 4, textAlign: 'right' },
   error: { color: BrandColors.danger, fontSize: 11, marginHorizontal: 20, marginTop: 12, textAlign: 'center' },
   primaryButton: { alignItems: 'center', backgroundColor: BrandColors.primary, borderRadius: 24, marginHorizontal: 16, marginTop: 18, paddingVertical: 14 },
+  returnButton: { alignSelf: 'stretch', marginHorizontal: 0, minHeight: 54, justifyContent: 'center', paddingHorizontal: 20 },
   primaryButtonText: { color: BrandColors.white, fontSize: 13, fontWeight: '800' },
   disabledButton: { opacity: 0.55 },
   completeContent: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: 20 },

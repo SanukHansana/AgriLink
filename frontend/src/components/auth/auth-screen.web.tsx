@@ -1,6 +1,10 @@
+import { BotanicalAccent } from '@/components/botanical-accent';
+import { BrandLogo } from '@/components/brand-logo';
+import { BrandTagline } from '@/components/brand-tagline';
 import { Link, usePathname } from 'expo-router';
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 type AuthScreenProps = PropsWithChildren<{ title: string; subtitle: string; footer?: ReactNode }>;
 
@@ -13,7 +17,7 @@ export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProp
     <ScrollView style={styles.page} contentContainerStyle={styles.pageContent} keyboardShouldPersistTaps="handled">
       <View style={[styles.shell, desktop && styles.desktopShell]}>
         <View style={[styles.brandPanel, desktop ? styles.desktopBrand : styles.compactBrand]}>
-          <View style={styles.brandRow}><View style={styles.brandMark}><Text style={styles.markText}>A</Text></View><Text style={styles.brandName}>AgriLink</Text></View>
+          <View style={{ gap: 16 }}><View style={styles.brandRow}><View style={{ backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14 }}><BrandLogo width={220} /></View></View><BrandTagline light /></View>
           {desktop && <>
             <View style={styles.story}>
               <Text style={styles.eyebrow}>GROWING CONNECTIONS</Text>
@@ -31,6 +35,7 @@ export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProp
           </>}
         </View>
         <View style={[styles.formPanel, desktop && styles.desktopForm]}>
+          <BotanicalAccent full />
           <View style={styles.formContent}>
             <View style={styles.tabs}>
               {([{ label: 'Log in', href: '/(auth)/login', selected: !registration }, { label: 'Sign up', href: '/(auth)/register', selected: registration }] as const).map((tab) => <Link key={tab.label} href={tab.href} asChild><Pressable accessibilityRole="link" accessibilityState={{ selected: tab.selected }} style={StyleSheet.flatten([styles.tab, tab.selected && styles.selectedTab])}><Text style={[styles.tabText, tab.selected && styles.selectedTabText]}>{tab.label}</Text></Pressable></Link>)}
@@ -47,7 +52,7 @@ export function AuthScreen({ children, footer, subtitle, title }: AuthScreenProp
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#f3f6f3' },
+  page: { flex: 1, backgroundColor: '#F1F5E7' },
   pageContent: { flexGrow: 1 },
   shell: { flexGrow: 1, width: '100%', backgroundColor: '#fff' },
   desktopShell: { flexDirection: 'row' },
@@ -68,14 +73,14 @@ const styles = StyleSheet.create({
   featureTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
   featureDetail: { color: '#b5cebf', fontSize: 13, lineHeight: 21 },
   brandFooter: { color: '#b5cebf', fontSize: 12 },
-  formPanel: { flex: 1, paddingHorizontal: 24, paddingVertical: 32, justifyContent: 'center' },
+  formPanel: { backgroundColor: '#FFFCF3', overflow: 'hidden', flex: 1, paddingHorizontal: 24, paddingVertical: 32, justifyContent: 'center' },
   desktopForm: { padding: 48 },
-  formContent: { width: '100%', maxWidth: 440, alignSelf: 'center' },
-  tabs: { flexDirection: 'row', backgroundColor: '#f3f6f3', borderRadius: 10, padding: 4, marginBottom: 32 },
+  formContent: { width: '100%', maxWidth: 480, alignSelf: 'center', padding: 28, backgroundColor: '#fff', borderRadius: 24, borderWidth: 1, borderColor: '#DCE5CD', boxShadow: '0px 12px 32px rgba(35, 66, 38, 0.08)' },
+  tabs: { flexDirection: 'row', backgroundColor: '#f3f6f3', borderRadius: 10, padding: 4, marginBottom: 24 },
   tab: { flex: 1, paddingVertical: 12, borderRadius: 7, alignItems: 'center', borderWidth: 1, borderColor: 'transparent' },
-  selectedTab: { backgroundColor: '#fff', borderColor: '#dfe8e1' },
-  tabText: { color: '#64736b', fontSize: 14, fontWeight: '600' },
-  selectedTabText: { color: '#216b43' },
+  selectedTab: { backgroundColor: '#006F2B', borderColor: '#006F2B' },
+  tabText: { color: '#64736b', fontSize: 16, fontWeight: '600' },
+  selectedTabText: { color: '#fff' },
   heading: { gap: 10, marginBottom: 28 },
   title: { color: '#183d2c', fontSize: 30, fontWeight: '800' },
   subtitle: { color: '#64736b', fontSize: 15, lineHeight: 23 },

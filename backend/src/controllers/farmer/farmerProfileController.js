@@ -1,3 +1,4 @@
+import { assertMapPin } from '../../utils/validation.js';
 import FarmerProfile, { FARMER_LANGUAGES } from '../../models/FarmerProfile.js';
 
 const PROFILE_FIELDS = [
@@ -10,6 +11,7 @@ const PROFILE_FIELDS = [
 ];
 
 function profileData(body) {
+  assertMapPin(body.farmLocation);
   return PROFILE_FIELDS.reduce((profile, field) => {
     if (body[field] !== undefined) profile[field] = body[field];
     return profile;

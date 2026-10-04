@@ -1,3 +1,4 @@
+import { assertMapPin } from '../../utils/validation.js';
 import FarmerProfile from '../../models/FarmerProfile.js';
 import Product, {
   LISTING_TYPES,
@@ -28,6 +29,7 @@ const PRODUCT_FIELDS = [
 ];
 
 function productData(body) {
+  assertMapPin(body.farmLocation);
   return PRODUCT_FIELDS.reduce((product, field) => {
     if (body[field] !== undefined) product[field] = body[field];
     return product;

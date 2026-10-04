@@ -12,6 +12,8 @@ export type FarmerProfile = {
   phone: string;
   farmName: string;
   farmLocation: {
+    latitude?: number;
+    longitude?: number;
     addressLine?: string;
     city: string;
     district: string;
@@ -27,6 +29,8 @@ export type FarmerProfileInput = {
   phone: string;
   farmName: string;
   farmLocation: {
+    latitude?: number;
+    longitude?: number;
     addressLine?: string;
     city: string;
     district: string;

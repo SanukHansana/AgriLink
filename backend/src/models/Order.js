@@ -64,6 +64,10 @@ const orderSchema = new mongoose.Schema(
     },
     bid: { type: mongoose.Schema.Types.ObjectId, ref: 'Bid' },
     stockReserved: { type: Boolean, default: false },
+    paymentStatus: { type: String, enum: ['unpaid', 'paid'], default: 'unpaid' },
+    paymentProvider: { type: String, enum: ['mock'] },
+    paidAt: Date,
+    receivedAt: Date,
     deliveryJob: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryJob', index: true },
     deliveredQuantity: { type: Number, min: 0 },
     seller: {

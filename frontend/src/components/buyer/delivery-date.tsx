@@ -1,6 +1,7 @@
 import { DateTimeField } from '@/components/date-time-field';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { Button } from '@/components/button';
 import { api, getApiErrorMessage } from '@/services/api';
 import type { BuyerOrder } from '@/types/transactions';
@@ -10,7 +11,7 @@ export function DeliveryDate({ order, onChange }: { order: BuyerOrder; onChange:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (order.deliveryJob || !['pending', 'confirmed', 'preparing'].includes(order.status)) return null;
-  return <View style={{ padding: 16, margin: 16, backgroundColor: '#edf5ef', borderRadius: 12, gap: 10 }}>
+  return <View style={{ padding: 16, margin: 16, backgroundColor: '#fff', borderRadius: 12, gap: 10 }}>
     <Text>After a harvest delay, agree a new delivery date with your farmer before pickup is scheduled.</Text>
     {order.requestedDeliveryDate && <Text>Requested delivery: {new Date(order.requestedDeliveryDate).toLocaleDateString()}</Text>}
     <DateTimeField label="New delivery date" value={date} onChangeText={setDate} />

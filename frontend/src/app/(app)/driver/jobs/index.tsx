@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { type Href, useRouter } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DeliveryJobCard } from '@/components/driver/delivery-job-card';
@@ -74,7 +75,7 @@ function Filter({ active, label, onPress }: { active: boolean; label: string; on
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 30 },
   title: { color: BrandColors.primary, fontSize: 21, fontWeight: '800', marginTop: 12 },
   subtitle: { color: '#969996', fontSize: 11, marginTop: 4 },

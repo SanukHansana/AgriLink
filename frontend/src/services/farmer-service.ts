@@ -104,7 +104,7 @@ export async function getFarmerOrders(status?: OrderStatus) {
 
 export async function updateFarmerOrderStatus(
   orderId: string,
-  status: Extract<OrderStatus, 'confirmed' | 'preparing' | 'dispatched' | 'cancelled'>,
+  status: Extract<OrderStatus, 'confirmed' | 'preparing' | 'dispatched' | 'inTransit' | 'cancelled'>,
 ) {
   const response = await api.patch<{ message: string; order: BuyerOrder }>(
     `/farmers/orders/${orderId}/status`,

@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { BrandColors } from '@/constants/theme';
 
@@ -12,6 +13,8 @@ export function PrimaryButton({ label, loading = false, onPress }: PrimaryButton
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: loading, busy: loading }}
       disabled={loading}
       onPress={onPress}
       style={({ pressed }) => [

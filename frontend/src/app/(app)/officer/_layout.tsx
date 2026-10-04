@@ -1,6 +1,8 @@
+import { translate, useLanguage } from '@/i18n/language';
 import { Redirect, Tabs } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { Button } from '@/components/button';
 import { getApiErrorMessage } from '@/services/api';
 
@@ -9,6 +11,7 @@ import { BrandColors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function OfficerTabsLayout() {
+  useLanguage();
   const { user, logout, refreshUser } = useAuth();
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export default function OfficerTabsLayout() {
         tabBarInactiveTintColor: '#969996',
         tabBarLabelStyle: { fontSize: 9, fontWeight: '700' },
         tabBarStyle: {
-          backgroundColor: BrandColors.white,
+          backgroundColor: BrandColors.cream,
           borderTopColor: BrandColors.border,
           height: 72,
           paddingBottom: 8,
@@ -45,28 +48,28 @@ export default function OfficerTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: translate('Dashboard'),
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="dashboard" />,
         }}
       />
       <Tabs.Screen
         name="requests"
         options={{
-          title: 'Requests',
+          title: translate('Requests'),
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="requests" />,
         }}
       />
       <Tabs.Screen
         name="notices"
         options={{
-          title: 'Notices',
+          title: translate('Notices'),
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="notices" />,
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: translate('Reports'),
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="reports" />,
         }}
       />
@@ -74,7 +77,7 @@ export default function OfficerTabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: translate('Profile'),
           tabBarIcon: ({ color }) => <OfficerTabIcon color={color} name="profile" />,
         }}
       />

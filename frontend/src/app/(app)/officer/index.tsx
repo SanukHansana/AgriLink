@@ -1,5 +1,6 @@
 import { type Href, useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdvisoryState } from '@/components/advisory/advisory-state';
@@ -69,8 +70,8 @@ export default function OfficerDashboardScreen() {
           <View style={styles.alertCard}>
             <Text style={styles.alertSymbol}>!</Text>
             <View style={styles.alertCopy}>
-              <Text style={styles.alertTitle}>{emergencyNotice.title}</Text>
-              <Text numberOfLines={2} style={styles.alertText}>{emergencyNotice.description}</Text>
+              <Text style={styles.alertTitle} localize={false}>{emergencyNotice.title}</Text>
+              <Text numberOfLines={2} style={styles.alertText} localize={false}>{emergencyNotice.description}</Text>
             </View>
           </View>
         ) : null}
@@ -119,7 +120,7 @@ function relativeTime(value: string) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { paddingBottom: 30 },
   hero: { backgroundColor: BrandColors.primary, paddingHorizontal: 20, paddingVertical: 18 },
   centerName: { color: '#D9F3E3', fontSize: 12 },

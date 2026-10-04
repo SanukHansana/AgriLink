@@ -11,7 +11,7 @@ export type PurchaseRequest = {
   unit: ProductUnit;
   maximumUnitPrice: number;
   requiredBy: string;
-  deliveryLocation: { city?: string; district: string };
+  deliveryLocation: { latitude?: number; longitude?: number; addressLine?: string; city?: string; district: string };
   qualityRequirements?: string;
   status: PurchaseRequestStatus;
   createdAt: string;

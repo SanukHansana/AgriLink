@@ -8,6 +8,12 @@ export function validMapPin(point) {
   return (point.latitude === undefined && point.longitude === undefined) || validCoordinates(point.latitude, point.longitude);
 }
 
+export function assertMapPin(point) {
+  if (point && typeof point === 'object' && !validMapPin(point)) {
+    throw Object.assign(new Error('Provide both valid latitude and longitude, or leave both empty'), { statusCode: 400 });
+  }
+}
+
 export function isValidMongoId(value) {
   return mongoose.isValidObjectId(value);
 }

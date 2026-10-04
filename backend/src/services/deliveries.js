@@ -4,10 +4,13 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { fail, validAddress } from './bidding.js';
 import { isValidMongoId } from '../utils/validation.js';
+import { requireOrderPayment } from './order-payment.js';
+import { notify } from './notifications.js';
 
 export function validatePickup(orders, pickupAt, now = new Date()) {
   if (!(pickupAt instanceof Date) || !Number.isFinite(pickupAt.getTime()) || pickupAt <= now) fail('Schedule pickup in the future');
   for (const order of orders) {
+    requireOrderPayment(order);
     if (!['preparing', 'dispatched'].includes(order.status)) fail('Start preparing each order before requesting pickup');
     const product = order.product;
     if (!product || typeof product !== 'object') fail('Product not found for this order', 409);
@@ -33,7 +36,7 @@ export function groupDropoffs(orders) {
 }
 
 export async function saveDeliveryJob(data, farmerId, jobId) {
-  return mongoose.connection.transaction(async (session) => {
+  const saved = await mongoose.connection.transaction(async (session) => {
     const existing = jobId ? await DeliveryJob.findOne({ _id: jobId, createdBy: farmerId, status: 'available' }).session(session) : null;
     if (jobId && !existing) fail('Only unassigned delivery jobs can be edited', 409);
     const input = { ...(existing?.toObject() ?? {}), ...data };
@@ -49,6 +52,7 @@ export async function saveDeliveryJob(data, farmerId, jobId) {
     for (const order of orders) {
       if (order.deliveryJob && String(order.deliveryJob) !== String(job._id)) fail('An order already has a delivery job', 409);
       order.deliveryJob = job._id;
+      order.status = 'dispatched';
       await order.save({ session });
     }
     if (existing) await Order.updateMany({ deliveryJob: job._id, _id: { $nin: ids } }, { $unset: { deliveryJob: '' } }, { session });
@@ -63,6 +67,11 @@ export async function saveDeliveryJob(data, farmerId, jobId) {
     await job.save({ session });
     return job;
   });
+  if (!jobId) {
+    const orders = await Order.find({ deliveryJob: saved._id });
+    for (const order of orders) await notify(order.buyer, `Order ${order.orderCode} is dispatched and awaiting driver pickup.`, `order-status:${order._id}:dispatched`);
+  }
+  return saved;
 }
 
 export async function removeDeliveryJob(jobId, farmerId) {

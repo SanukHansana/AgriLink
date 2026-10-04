@@ -1,5 +1,6 @@
 import { type Href, useRouter } from 'expo-router';
-import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RecoveryActions } from '@/components/driver/recovery-actions';
@@ -161,7 +162,7 @@ function formatAddress(location: DeliveryContactLocation) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { paddingBottom: 30 },
   emptyHeader: { paddingHorizontal: 20, paddingTop: 18 },
   title: { color: BrandColors.primary, fontSize: 21, fontWeight: '800', marginHorizontal: 20, marginTop: 16 },

@@ -1,4 +1,5 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Text } from '@/i18n/native';
 import type { ColorValue } from 'react-native';
 
 const glyphs = {

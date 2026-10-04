@@ -14,6 +14,7 @@ import { api, setApiToken } from '@/services/api';
 import type { AuthUser, LoginInput, RegisterInput } from '@/types/auth';
 import { writeSession } from '@/services/session-store';
 import { setOfflineOwner } from '@/services/offline-driver';
+import { unregisterPhonePush } from '@/services/push-notifications';
 import { stopBackgroundSharing } from '@/services/background-location';
 
 type AuthContextValue = {
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     sessionGeneration.current += 1;
+    await unregisterPhonePush().catch(() => {});
     setApiToken(null);
     setOfflineOwner(null);
     setUser(null);

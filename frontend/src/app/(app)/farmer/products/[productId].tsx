@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ProductForm } from '@/components/farmer/product-form';
@@ -40,7 +41,7 @@ export default function FarmerEditProductScreen() {
     catch (requestError) { setError(getApiErrorMessage(requestError)); setIsSubmitting(false); }
   };
 
-  return <SafeAreaView edges={['top']} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><View style={styles.header}><Pressable onPress={router.back}><Text style={styles.back}>‹</Text></Pressable><View><Text style={styles.title}>Edit Product</Text><Text style={styles.subtitle}>{product.name}</Text></View></View><ProductForm error={error} initialProduct={product} isSubmitting={isSubmitting} onSubmit={submit} submitLabel="Save Product" />{product.status !== 'inactive' ? <Pressable disabled={isSubmitting} onPress={deactivate} style={styles.deactivate}><Text style={styles.deactivateText}>Deactivate Product</Text></Pressable> : null}</ScrollView></SafeAreaView>;
+  return <SafeAreaView edges={['top']} style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"><View style={styles.header}><Pressable onPress={router.back}><Text style={styles.back}>‹</Text></Pressable><View><Text style={styles.title}>Edit Product</Text><Text style={styles.subtitle} localize={false}>{product.name}</Text></View></View><ProductForm error={error} initialProduct={product} isSubmitting={isSubmitting} onSubmit={submit} submitLabel="Save Product" />{product.status !== 'inactive' ? <Pressable disabled={isSubmitting} onPress={deactivate} style={styles.deactivate}><Text style={styles.deactivateText}>Deactivate Product</Text></Pressable> : null}</ScrollView></SafeAreaView>;
 }
 
-const styles = StyleSheet.create({ safeArea: { backgroundColor: BrandColors.white, flex: 1 }, content: { padding: 18, paddingBottom: 35 }, header: { alignItems: 'center', flexDirection: 'row', marginBottom: 18 }, back: { color: BrandColors.primary, fontSize: 36, marginRight: 10 }, title: { color: BrandColors.primary, fontSize: 20, fontWeight: '800' }, subtitle: { color: '#929592', fontSize: 10, marginTop: 2 }, deactivate: { alignItems: 'center', borderColor: BrandColors.danger, borderRadius: 24, borderWidth: 1, marginTop: 12, paddingVertical: 13 }, deactivateText: { color: BrandColors.danger, fontSize: 12, fontWeight: '800' } });
+const styles = StyleSheet.create({ safeArea: { backgroundColor: BrandColors.background, flex: 1 }, content: { padding: 18, paddingBottom: 35 }, header: { alignItems: 'center', flexDirection: 'row', marginBottom: 18 }, back: { color: BrandColors.primary, fontSize: 36, marginRight: 10 }, title: { color: BrandColors.primary, fontSize: 20, fontWeight: '800' }, subtitle: { color: '#929592', fontSize: 10, marginTop: 2 }, deactivate: { alignItems: 'center', borderColor: BrandColors.danger, borderRadius: 24, borderWidth: 1, marginTop: 12, paddingVertical: 13 }, deactivateText: { color: BrandColors.danger, fontSize: 12, fontWeight: '800' } });

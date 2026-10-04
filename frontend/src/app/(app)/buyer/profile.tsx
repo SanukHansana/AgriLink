@@ -1,12 +1,8 @@
+import { LanguagePicker } from '@/components/language-picker';
+import { LocationFields, type MapPin } from '@/components/location-fields';
 import { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BuyerDataState } from '@/components/buyer/buyer-data-state';
@@ -44,6 +40,7 @@ export default function BuyerProfileScreen() {
   const [addressLine, setAddressLine] = useState('');
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
+  const [pin, setPin] = useState<MapPin>({});
   const [postalCode, setPostalCode] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -68,6 +65,7 @@ export default function BuyerProfileScreen() {
       setCity(primaryLocation?.city ?? '');
       setDistrict(primaryLocation?.district ?? '');
       setPostalCode(primaryLocation?.postalCode ?? '');
+      setPin({ latitude: primaryLocation?.latitude, longitude: primaryLocation?.longitude });
     } else if (!isProfileLoading) {
       setIsEditing(true);
     }
@@ -117,6 +115,7 @@ export default function BuyerProfileScreen() {
 
     const editedLocation: DeliveryLocation = {
       ...primaryLocation,
+      latitude: pin.latitude, longitude: pin.longitude,
       label: primaryLocation?.label || 'Primary',
       addressLine: addressLine.trim(),
       city: city.trim(),
@@ -152,8 +151,8 @@ export default function BuyerProfileScreen() {
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <View style={styles.profileCopy}>
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
+            <Text style={styles.name} localize={false}>{user.name}</Text>
+            <Text style={styles.email} localize={false}>{user.email}</Text>
             <Text style={styles.memberSince}>Member since {memberSince}</Text>
           </View>
         </View>
@@ -235,6 +234,7 @@ export default function BuyerProfileScreen() {
               value={postalCode}
             />
 
+            <LocationFields key={profile?.updatedAt ?? 'new'} value={pin} onChange={setPin} />
             {formError ? <Text style={styles.formError}>{formError}</Text> : null}
             <View style={styles.formActions}>
               {profile ? (
@@ -291,7 +291,7 @@ export default function BuyerProfileScreen() {
         <Pressable accessibilityRole="button" onPress={logout} style={styles.logoutButton}>
           <Text style={styles.logoutText}>Logout Account</Text>
         </Pressable>
-      </ScrollView>
+      <LanguagePicker profile /></ScrollView>
     </SafeAreaView>
   );
 }
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 7,
   },
-  input: {
+  input: { backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 10,
     borderWidth: 1,

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { getApiErrorMessage } from '@/services/api';
 import { getDriverJob } from '@/services/driver-service';
@@ -10,8 +11,9 @@ export function useDriverJob(jobId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isActive = true;
+    setIsLoading(true);
     const loadJob = async () => {
       if (!jobId) {
         setError('Delivery job ID is missing.');
@@ -34,7 +36,9 @@ export function useDriverJob(jobId?: string) {
     return () => {
       isActive = false;
     };
-  }, [jobId, refreshKey]);
+  // Recreate the focus callback when a manual refresh is requested.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId, refreshKey]));
 
   const refresh = useCallback(() => {
     setIsLoading(true);

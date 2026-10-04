@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 
 import { AuthScreen } from '@/components/auth/auth-screen';
 import { FormField } from '@/components/auth/form-field';

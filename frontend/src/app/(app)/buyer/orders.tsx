@@ -1,15 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OrderPaymentActions } from '@/components/buyer/order-payment-actions';
 import { BuyerDataState } from '@/components/buyer/buyer-data-state';
 import { BrandColors } from '@/constants/theme';
 import { useBuyerOrders } from '@/hooks/use-buyer-orders';
@@ -64,6 +59,7 @@ export default function BuyerOrdersScreen() {
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl onRefresh={refresh} refreshing={isLoading} />}
         showsVerticalScrollIndicator={false}>
@@ -110,7 +106,7 @@ export default function BuyerOrdersScreen() {
         ) : (
           <View style={styles.orderList}>
             {visibleOrders.map((order) => (
-              <OrderCard key={order._id} order={order} />
+              <OrderCard key={order._id} order={order} onChange={refresh} />
             ))}
           </View>
         )}
@@ -119,7 +115,7 @@ export default function BuyerOrdersScreen() {
   );
 }
 
-function OrderCard({ order }: { order: BuyerOrder }) {
+function OrderCard({ order, onChange }: { order: BuyerOrder; onChange: () => void }) {
   const router = useRouter();
   const product = typeof order.product === 'string' ? null : order.product;
   const isDelivered = order.status === 'delivered';
@@ -173,6 +169,7 @@ function OrderCard({ order }: { order: BuyerOrder }) {
       </Text>
       <Text style={styles.total}>Total: {formatLkr(order.totalAmount)}</Text>
 
+      <OrderPaymentActions order={order} onChange={onChange} />
       <View style={styles.cardFooter}>
         <Text style={styles.date}>{dateLabel}</Text>
         <View style={styles.cardActions}>
@@ -210,7 +207,7 @@ function statusTextStyle(status: OrderStatus) {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.background,
     flex: 1,
   },
   content: {
@@ -265,7 +262,7 @@ const styles = StyleSheet.create({
   orderList: {
     gap: 12,
   },
-  orderCard: {
+  orderCard: { backgroundColor: '#fff',
     borderColor: BrandColors.border,
     borderRadius: 15,
     borderWidth: 1,

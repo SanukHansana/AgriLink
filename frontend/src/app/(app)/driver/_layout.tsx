@@ -1,3 +1,4 @@
+import { translate, useLanguage } from '@/i18n/language';
 import { Redirect, Tabs } from 'expo-router';
 
 import { DriverTabIcon } from '@/components/driver/driver-tab-icon';
@@ -5,6 +6,7 @@ import { BrandColors } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function DriverTabsLayout() {
+  useLanguage();
   const { user } = useAuth();
   if (user?.role !== 'driver') return <Redirect href="/(app)" />;
 
@@ -16,7 +18,7 @@ export default function DriverTabsLayout() {
         tabBarInactiveTintColor: '#969996',
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
         tabBarStyle: {
-          backgroundColor: BrandColors.white,
+          backgroundColor: BrandColors.cream,
           borderTopColor: BrandColors.border,
           height: 72,
           paddingBottom: 8,
@@ -26,35 +28,35 @@ export default function DriverTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: translate('Home'),
           tabBarIcon: ({ color }) => <DriverTabIcon color={color} name="home" />,
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
-          title: 'Jobs',
+          title: translate('Jobs'),
           tabBarIcon: ({ color }) => <DriverTabIcon color={color} name="jobs" />,
         }}
       />
       <Tabs.Screen
         name="active"
         options={{
-          title: 'Active',
+          title: translate('Active'),
           tabBarIcon: ({ color }) => <DriverTabIcon color={color} name="active" />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: translate('History'),
           tabBarIcon: ({ color }) => <DriverTabIcon color={color} name="history" />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: translate('Profile'),
           tabBarIcon: ({ color }) => <DriverTabIcon color={color} name="profile" />,
         }}
       />

@@ -2,7 +2,8 @@ import { DateTimeField } from '@/components/date-time-field';
 import { SelectField } from '@/components/select-field';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, Text, TextInput } from '@/i18n/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdvisoryState } from '@/components/advisory/advisory-state';
@@ -127,7 +128,7 @@ function templateFor(type: OfficialResponseType, farmerName: string, title: stri
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#FAFCFA', flex: 1 },
+  safeArea: { backgroundColor: BrandColors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 34 },
   header: { alignItems: 'center', flexDirection: 'row', minHeight: 66 },
   back: { color: BrandColors.primary, fontSize: 36, lineHeight: 38, marginRight: 11 },

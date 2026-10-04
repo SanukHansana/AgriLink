@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { getApiErrorMessage } from '@/services/api';
 import { getBuyerOrders } from '@/services/order-service';
@@ -10,7 +11,7 @@ export function useBuyerOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isActive = true;
 
     const loadOrders = async () => {
@@ -32,10 +33,15 @@ export function useBuyerOrders() {
     };
 
     loadOrders();
+    // Keep acceptance/payment changes visible while the buyer remains on Orders.
+    const timer = setInterval(loadOrders, 15000);
     return () => {
       isActive = false;
+      clearInterval(timer);
     };
-  }, [refreshKey]);
+  // Manual refresh intentionally reruns the focused loader.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]));
 
   const refresh = useCallback(() => {
     setIsLoading(true);

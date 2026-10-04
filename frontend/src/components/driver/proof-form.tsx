@@ -1,5 +1,6 @@
 import * as ImagePicker from '@/services/image-picker';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { Button } from '@/components/button';
 import { useState } from 'react';
 import { FormField } from '@/components/auth/form-field';

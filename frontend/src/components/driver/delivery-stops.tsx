@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import * as Location from 'expo-location';
-import { AppState, Linking, Platform, Text, View } from 'react-native';
+import { AppState, Linking, View } from 'react-native';
+import { Text } from '@/i18n/native';
 import { Button } from '@/components/button';
-import { startBackgroundSharing, stopBackgroundSharing } from '@/services/background-location';
+import { startBackgroundSharing, stopBackgroundSharing, supportsBackgroundLocation } from '@/services/background-location';
 import { operationId, sendDriverUpdate } from '@/services/offline-driver';
 import { StopOutcome } from './stop-outcome';
 import { mapUrl } from '@/components/location-fields';
@@ -60,9 +61,9 @@ export function DeliveryStops({ job, onChange }: { job: DeliveryJob; onChange: (
   };
   return <View style={{ padding: 16, gap: 12 }}>
     <Text style={{ fontWeight: '700', fontSize: 16 }}>{kind === 'pickup' ? 'Pickup stops' : 'Drop-off stops'}</Text>
-    {points.map((point, index) => <View key={point._id} style={{ backgroundColor: '#edf5ef', padding: 14, borderRadius: 10, gap: 8 }}><Text>{index + 1}. {point.contactName} {point.completedAt ? '✓ Completed' : ''}</Text><Text>{point.addressLine}, {point.city}, {point.district}</Text><Button title="Navigate to this stop" onPress={() => void Linking.openURL(mapUrl(point))} />{point.phone && <Button title="Call contact" onPress={() => void Linking.openURL(`tel:${point.phone}`)} />}{!point.completedAt && kind === 'pickup' && job.status === 'collecting' && <><Text>{kind === 'pickup' ? 'Confirm once collection at this stop is complete.' : 'Confirm after handing over this buyer’s order.'}</Text><Button title={kind === 'pickup' ? 'Confirm collected' : 'Confirm dropped off'} disabled={busy} onPress={() => void complete(index)} /></>}{kind === 'dropoff' && point._id !== 'legacy' && <StopOutcome job={job} index={index} onChange={onChange} />}</View>)}
+    {points.map((point, index) => <View key={point._id} style={{ backgroundColor: '#fff', padding: 14, borderRadius: 10, gap: 8 }}><Text>{index + 1}. {point.contactName} {point.completedAt ? '✓ Completed' : ''}</Text><Text>{point.addressLine}, {point.city}, {point.district}</Text><Button title="Navigate to this stop" onPress={() => void Linking.openURL(mapUrl(point))} />{point.phone && <Button title="Call contact" onPress={() => void Linking.openURL(`tel:${point.phone}`)} />}{!point.completedAt && kind === 'pickup' && job.status === 'collecting' && <><Text>{kind === 'pickup' ? 'Confirm once collection at this stop is complete.' : 'Confirm after handing over this buyer’s order.'}</Text><Button title={kind === 'pickup' ? 'Confirm collected' : 'Confirm dropped off'} disabled={busy} onPress={() => void complete(index)} /></>}{kind === 'dropoff' && point._id !== 'legacy' && <StopOutcome job={job} index={index} onChange={onChange} />}</View>)}
     <Text>Share your location with this delivery’s farmer and buyers while this screen is open. Sharing stops when you leave the screen or app.</Text>
-    {Platform.OS !== 'web' && job.status !== 'paused' && <Button title="Enable background GPS for this trip" disabled={busy} onPress={async () => { setBusy(true); setError(null); stop(); try { await startBackgroundSharing(job._id); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to start background sharing'); } finally { setBusy(false); } }} />}
+    {supportsBackgroundLocation() && job.status !== 'paused' && <Button title="Enable background GPS for this trip" disabled={busy} onPress={async () => { setBusy(true); setError(null); stop(); try { await startBackgroundSharing(job._id); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to start background sharing'); } finally { setBusy(false); } }} />}
     <Button title={sharing ? 'Stop sharing location' : 'Share live location'} disabled={busy || job.status === 'paused'} onPress={sharing ? stop : start} />
     {error && <Text style={{ color: '#a33425' }}>{error}</Text>}
   </View>;

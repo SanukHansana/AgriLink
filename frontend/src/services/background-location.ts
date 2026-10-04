@@ -1,11 +1,16 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import * as SecureStore from 'expo-secure-store';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Platform } from 'react-native';
 import { api, getApiToken } from '@/services/api';
 import { operationId } from './offline-driver';
 
 const TASK = 'agrilink-active-delivery-location';
 const KEY = 'agrilink-background-location';
+export function supportsBackgroundLocation() {
+  return Platform.OS !== 'web' && Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
+}
 type Settings = { jobId: string; token: string; baseUrl: string; sessionId: string; expiresAt: number };
 async function settings(): Promise<Settings | null> { const raw = await SecureStore.getItemAsync(KEY); return raw ? JSON.parse(raw) : null; }
 
@@ -31,20 +36,22 @@ TaskManager.defineTask(TASK, async ({ data, error }) => {
 });
 
 export async function backgroundSharingJob() {
+  if (!supportsBackgroundLocation()) return null;
   const saved = await settings();
   if (saved && saved.expiresAt < Date.now()) { await stopBackgroundSharing(); return null; }
   return saved?.jobId ?? null;
 }
 export async function stopBackgroundSharing() {
+  if (Platform.OS === 'web') return;
   const saved = await settings();
   // Delete credentials first so an already running callback cannot start another update.
   await SecureStore.deleteItemAsync(KEY);
-  if (await Location.hasStartedLocationUpdatesAsync(TASK).catch(() => false)) await Location.stopLocationUpdatesAsync(TASK);
+  if (supportsBackgroundLocation() && await Location.hasStartedLocationUpdatesAsync(TASK).catch(() => false)) await Location.stopLocationUpdatesAsync(TASK);
   if (saved) await locationRequest(saved, { sharing: false, sessionId: saved.sessionId }).catch(() => {});
 }
 
 export async function startBackgroundSharing(jobId: string) {
-  if (!await TaskManager.isAvailableAsync()) throw new Error('Background tracking requires a native development or production build. Foreground sharing still works.');
+  if (!supportsBackgroundLocation() || !await TaskManager.isAvailableAsync()) throw new Error('Background tracking requires a native development or production build. Foreground sharing still works.');
   const foreground = await Location.requestForegroundPermissionsAsync();
   if (foreground.status !== 'granted') throw new Error('Allow location access first');
   const background = await Location.requestBackgroundPermissionsAsync();
