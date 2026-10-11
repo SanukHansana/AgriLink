@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/auth-context';
 import type { UserRole } from '@/types/auth';
 
 const roleHomes: Record<UserRole, Href> = {
+  admin: '/(app)/admin' as Href,
   agricultureOfficer: '/(app)/officer' as Href,
   buyer: '/(app)/buyer',
   driver: '/(app)/driver' as Href,

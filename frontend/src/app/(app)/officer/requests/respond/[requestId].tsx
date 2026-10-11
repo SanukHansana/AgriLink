@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,15 +25,14 @@ export default function OfficerResponseScreen() {
   const requestedType = Array.isArray(params.type) ? params.type[0] : params.type;
   const state = useAssistanceRequest(requestId);
   const [type, setType] = useState<OfficialResponseType>(requestedType ?? 'approvedAndScheduled');
-  const [message, setMessage] = useState('');
+  const [draftMessage, setMessage] = useState<string | null>(null);
   const [scheduledVisitAt, setScheduledVisitAt] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!state.request || message) return;
-    setMessage(templateFor(type, state.request.farmer.name, state.request.title));
-  }, [message, state.request, type]);
+  const message = draftMessage ?? (state.request
+    ? templateFor(type, state.request.farmer.name, state.request.title)
+    : '');
 
   if (state.isLoading || state.error || !state.request) {
     return <SafeAreaView style={styles.safeArea}><AdvisoryState error={state.error} isLoading={state.isLoading} onRetry={state.refresh} /></SafeAreaView>;
